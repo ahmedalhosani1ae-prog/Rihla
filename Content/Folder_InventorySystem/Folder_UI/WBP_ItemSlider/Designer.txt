@@ -1,0 +1,13 @@
+WBP_ItemSlider
+    CanvasPanel
+        Border_Slider (IsVariable)
+            Border
+                VerticalBox
+                    Overlay
+                        Slider_ItemQuantity (IsVariable)
+                        TXT_ItemQuantity (IsVariable)
+                        HorizontalBox
+                            Button_Cancel (IsVariable)
+                                TXT_Cancel
+                            Button_Drop (IsVariable)
+                                TXT_Drop (IsVariable)

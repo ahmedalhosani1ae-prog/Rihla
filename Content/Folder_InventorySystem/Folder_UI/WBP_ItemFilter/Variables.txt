@@ -1,0 +1,4 @@
+FilterName (Text (Instance Editable))
+IsOn (Boolean)
+Filter (E_ItemCategory (Instance Editable))
+CategoryIcon (Texture2D)

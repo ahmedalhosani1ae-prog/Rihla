@@ -1,0 +1,17 @@
+WBP_ItemTool
+    CanvasPanel
+        Border_ItemTool (IsVariable)
+            HorizontalBox
+                Border
+                    VerticalBox
+                        Button_Use (IsVariable)
+                        Button_Drop (IsVariable)
+                Border
+                    VerticalBox
+                        TXT_ItemName (IsVariable)
+                        Box_Stats (VerticalBox) (IsVariable)
+                            Border
+                            TXT_ItemStat (IsVariable)
+                        Box_Effects (VerticalBox) (IsVariable)
+                            Border
+                            TXT_ItemEffects (IsVariable)

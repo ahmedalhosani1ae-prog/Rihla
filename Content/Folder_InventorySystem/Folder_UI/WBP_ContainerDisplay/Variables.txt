@@ -1,0 +1,1 @@
+ContainerInventory (BPC_Inventory (Instance Editable, Expose on Spawn))

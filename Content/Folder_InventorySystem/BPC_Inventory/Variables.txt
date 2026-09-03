@@ -1,0 +1,7 @@
+ItemSlots (S_ItemSlot (Array))
+InventorySize (Integer (Default Value: 21))
+PlayerSkeletalParts (Skeletal Mesh Component (Array))
+WBP_PlayerDisplay (WBP_PlayerDisplay)
+WBP_ContainerDisplay (WBP_ContainerDisplay)
+CategoryCapacities (E_ItemCategory type, Map, S_CategoryCapacity Value)
+EquippedItemIDs (E_EquipmentCategory type, Map, Guid Value)

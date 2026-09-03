@@ -1,0 +1,12 @@
+BP_Wardrobe_Actor
+    DefaultSceneRoot
+        Mesh
+            Base_Torso
+                Base_Hands
+            Headgear
+            MeleeWeapon
+            Pants
+            RangedWeapon
+            Shield
+            Shoes
+            Torso

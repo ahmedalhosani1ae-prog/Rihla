@@ -1,0 +1,5 @@
+BP_Item_Base (Self)
+    DefaultSceneRoot
+        ItemMesh
+            SphereCollision
+    BPC_ItemData

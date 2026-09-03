@@ -1,0 +1,6 @@
+EffectText (Text)
+ItemEffect (BP_Item_Effects_Base (Class Reference))
+ParticleEffect (Particle System)
+HealthRestore (Integer)
+StaminaRestore (Integer)
+TemporaryHearts (Integer)

@@ -1,0 +1,3 @@
+WBP_InteractionUi
+    Border
+        TXT_Message (IsVariable)

@@ -1,0 +1,22 @@
+BP_ThirdPersonCharacter (Self)
+    BPC_CharacterEquipment (InventorySize 6)
+    BPC_Interaction
+    BPC_Inventory
+    BPC_QuickSelect
+
+    CapsuleComponent
+        ArrowComponent
+        CameraBoom
+            FollowCamera
+        Mesh
+            Base_Torso
+                Base_Hands
+            Headgear
+            MeleeWeapon
+            Pants
+            RangedWeapon
+            Shield
+            Shoes
+            Torso
+    CharacterMovement
+    PlayerStats

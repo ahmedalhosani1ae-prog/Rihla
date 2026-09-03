@@ -1,0 +1,7 @@
+WBP_InventorySlot
+    SizeBox (64x64)
+        Button_InventorySlot (IsVariable)
+            Border
+                Overlay_InventorySlot (IsVariable)
+                    IMG_ItemIcon (IsVariable)
+                    TXT_ItemQuantity (IsVariable)

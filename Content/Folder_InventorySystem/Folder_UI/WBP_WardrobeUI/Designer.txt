@@ -1,0 +1,5 @@
+WBP_WardrobeUI
+   Border
+      Overlay
+         ScaleBox
+            Image (RTM_Inventory_Actor)

@@ -1,0 +1,6 @@
+None
+Common
+Uncommon
+Rare
+Legendary
+Ancient

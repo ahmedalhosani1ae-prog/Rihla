@@ -1,0 +1,4 @@
+ItemClass (BP_ItemBase (Class Reference))
+SkeletalMesh (SkeletalMesh (Object Reference))
+StaticMesh (StaticMesh (Object Reference))
+Materials (Material Interface (Array))

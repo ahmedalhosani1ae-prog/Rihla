@@ -1,0 +1,3 @@
+Inventory (BPC_Inventory)
+CurrentFilter (E_ItemCategory)
+InitialFilter (E_ItemCategory (Instance Editable, Expose On Spawn))

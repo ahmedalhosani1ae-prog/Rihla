@@ -1,0 +1,3 @@
+Inventory (BPC_Inventory (Instance Editable, Expose on Spawn))
+Index (Integer (Instance Editable, Expose on Spawn))
+WBP_EquipmentSlot (WBP_EquipmentSlot (Instance Editable, Expose on Spawn))

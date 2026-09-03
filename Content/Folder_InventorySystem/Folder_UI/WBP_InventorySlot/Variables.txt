@@ -1,0 +1,5 @@
+Inventory (BPC_Inventory (Instance Editable, Expose on Spawn))
+ItemID (Name (Instance Editable, Expose on Spawn))
+ItemQuantity (Integer (Instance Editable, Expose on Spawn))
+Index (Integer (Instance Editable, Expose on Spawn))
+WBP_Item_Tool (WBP_Item_Tool)

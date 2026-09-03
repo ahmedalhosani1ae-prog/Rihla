@@ -1,0 +1,4 @@
+Inventory (BPC_Inventory (Instance Editable, Expose on Spawn))
+Index (Integer (Instance Editable, Expose on Spawn))
+ItemQuantity (Integer)
+SelectedQuantity (Integer)

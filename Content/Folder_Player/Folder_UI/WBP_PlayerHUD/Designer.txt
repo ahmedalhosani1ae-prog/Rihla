@@ -1,0 +1,3 @@
+WBP_PlayerHUD
+    WBP_InteractionUI (IsVariable)
+    WBP_HotbarDisplay (IsVariable)

@@ -1,0 +1,5 @@
+WBP_ItemFilter
+    Overlay
+        TXT_FilterName (IsVariable)
+        Button_Filter (IsVariable)
+            IMG_FilterIcon (IsVariable)

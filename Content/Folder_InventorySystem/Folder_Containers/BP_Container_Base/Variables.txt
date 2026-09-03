@@ -1,0 +1,5 @@
+ContainerSlots (S_ItemSlot (Instance Editable, Array))
+ContainerSize (Integer (Instance Editable))
+ContainerName (ContainerName (Instance Editable))
+IsOpen (Boolean)
+ContainerSFX (S_ContainerSFX (Instance Editable))

@@ -1,0 +1,4 @@
+None
+Melee
+Ranged
+Shield

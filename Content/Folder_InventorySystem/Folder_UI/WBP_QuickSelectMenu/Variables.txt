@@ -1,0 +1,4 @@
+Inventory (BPC_Inventory (Instance Editable, Expose on Spawn))
+SelectedIndex (Integer)
+ItemCount (Integer)
+Items (WBP_QuickSelectSlot (Array))

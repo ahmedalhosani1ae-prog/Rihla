@@ -1,0 +1,5 @@
+ItemID (Name (Instance Editable, Expose on Spawn))
+ItemQuantity (Integer (Instance Editable, Expose on Spawn))
+SlotIndex (Integer (Instance Editable, Expose on Spawn))
+IsSelected (Boolean)
+ItemInstanceID (Guid)

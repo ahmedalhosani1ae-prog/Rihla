@@ -1,0 +1,2 @@
+Containers (BPC_Inventory (Soft Object Reference, Array))
+ContainerInventories (S_ContainerInventory (Array))

@@ -1,0 +1,6 @@
+WBP_ItemSlotPreview
+    SizeBox (100x100)
+        Border
+            Overlay
+                IMG_Item (IsVariable)
+                TXT_ItemQuantity (IsVariable)

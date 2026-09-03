@@ -1,0 +1,12 @@
+WBP_ContainerDisplay
+    CanvasPanel
+        Border_Frame
+            Border_Background
+                HorizontalBox
+                    Box_Character
+                        WBP_WardrobeUI
+                    Box_Inventory
+                        WBP_InventoryUI
+                    Spacer
+                    Box_ContainerInventory
+                        WBP_ContainerUI

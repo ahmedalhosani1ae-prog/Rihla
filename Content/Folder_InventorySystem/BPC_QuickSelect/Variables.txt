@@ -1,0 +1,4 @@
+Inventory (BPC_Inventory)
+SelectedIndex (Integer)
+QuickSelectOpen (Boolean)
+QuickSelectWidget (WBP_QuickSelectMenu)

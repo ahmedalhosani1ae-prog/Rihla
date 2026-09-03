@@ -1,0 +1,8 @@
+WBP_EquipmentTool
+    CanvasPanel
+        Border_ItemTool (IsVariable)
+            Overlay
+                Border_Actions
+                    VerticalBox
+                        Button_Unequip (Index 0) (IsVariable)
+                        Button_Drop (Index 2) (IsVariable)

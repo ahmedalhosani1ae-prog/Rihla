@@ -1,0 +1,5 @@
+WBP_PLayerHUD (WBP_PlayerHUD)
+BP_Wardrobe_Actor (BP_Wardrobe_Actor)
+BP_Inventory_Actor (BP_Inventory_Actor)
+bIsInventoryOpen (Boolean)
+LastInventoryFilter (E_ItemCategory (Instance Editable, Expose On Spawn))

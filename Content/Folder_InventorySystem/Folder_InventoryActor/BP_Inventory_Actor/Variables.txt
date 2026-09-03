@@ -1,0 +1,3 @@
+WBP_PlayerDisplay (WBP_PlayerDisplay)
+BP_Wardrobe_Actor (BP_Wardrobe_Actor (Instance Editable, Expose on Spawn))
+WBP_ContainerDisplay (WBP_ContainerDisplay)

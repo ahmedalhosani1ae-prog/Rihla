@@ -1,0 +1,16 @@
+WBP_ContainerUI
+    Border
+        VerticalBox
+            Box_Filters (HorizontalBox)
+                Filter_Weapons (WBP_ItemFilter) (IsVariable)
+                Filter_Apparel (WBP_ItemFilter) (IsVariable)
+                Filter_Food (WBP_ItemFilter) (IsVariable)
+                Filter_Materials (WBP_ItemFilter) (IsVariable)
+                Filter_Builds (WBP_ItemFilter) (IsVariable)
+                Filter_Other (WBP_ItemFilter) (IsVariable)
+            Box_InventoryOutline (HorizontalBox)
+                Border
+                    Box_Layout (VerticalBox)
+                        Box_Inventory (HorizontalBox)
+                            ScrollBox
+                                WrapBox_Inventory (IsVariable)

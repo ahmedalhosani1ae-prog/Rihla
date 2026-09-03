@@ -1,0 +1,5 @@
+BP_Container_Base (Self)
+    DefaultSceneRoot
+        ContainerBase
+            ContainerLid
+    BPC_Inventory

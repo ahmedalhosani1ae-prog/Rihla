@@ -1,0 +1,6 @@
+WBP_QuickSelectMenu
+    Canvas Panel
+        Overlay_Main
+            InputCapture
+            ScrollBox
+                HorizontalBox_Weapons

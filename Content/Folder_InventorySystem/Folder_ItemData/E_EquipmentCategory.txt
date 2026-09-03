@@ -1,0 +1,7 @@
+None
+Headgear
+Torso
+Pants
+Melee
+Ranged
+Shield

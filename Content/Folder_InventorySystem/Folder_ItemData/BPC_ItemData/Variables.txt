@@ -1,0 +1,2 @@
+ItemData (Data Table Row Handle (Default Value: Data Table: DT_ItemData, Row Name: None))
+ItemQuantity (Integer (Default Value: 1))

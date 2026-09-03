@@ -1,0 +1,6 @@
+WBP_QuickSelectSlot
+    SizeBox (100x100)
+        Overlay
+            Image_Icon
+            Image_Selected
+            TXT_Quantity

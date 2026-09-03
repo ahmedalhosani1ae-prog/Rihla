@@ -1,0 +1,1 @@
+(Mappings=((Modifiers=("/Script/EnhancedInput.InputModifierNegate'/Game/Player/Input/IMC_MouseLook.IMC_MouseLook:InputModifierNegate_0'"),Action="/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_MouseLook.IA_MouseLook'",Key=Mouse2D)))

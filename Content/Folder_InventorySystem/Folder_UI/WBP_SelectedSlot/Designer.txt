@@ -1,0 +1,3 @@
+WBP_SelectedSlot
+    SizeBox (120x120)
+        Border (M_ItemSlotGlow)

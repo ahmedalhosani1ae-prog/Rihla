@@ -1,0 +1,7 @@
+WBP_EquipmentSlot
+    SizeBox (60x60)
+        Button_EquipmentSlot (IsVariable)
+            Border_Outer
+                Overlay
+                    Image_Empty (IsVariable)
+                    Image_Full  (IsVariable)

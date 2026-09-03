@@ -1,0 +1,10 @@
+WBP_PlayerDisplay
+    CanvasPanel
+        Background Blur
+        Border_Frame
+            Border_Background
+                HorizontalBox
+                    Box_Left
+                        WBP_InventoryUI (IsVariable)
+                    Box_Right
+                        WBP_WardrobeUI (IsVariable)

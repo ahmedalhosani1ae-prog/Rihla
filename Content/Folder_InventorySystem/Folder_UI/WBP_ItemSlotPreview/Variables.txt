@@ -1,0 +1,2 @@
+ItemID (Name (Instance Editable, Expose on Spawn))
+ItemQuantity (Name (Instance Editable, Expose on Spawn))

@@ -1,0 +1,7 @@
+CharacterEquipment (BPC_CharacterEquipment (Instance Editable, Expose on Spawn))
+ItemID (Name (Instance Editable, Expose on Spawn))
+EquipmentCategory (E_EquipmentCategory (Instance Editable, Expose on Spawn))
+EmptySlot (Texture2D (Instance Editable))
+Index (Integer (Instance Editable, Expose on Spawn))
+ItemQuantity (Integer (Instance Editable, Expose on Spawn))
+DDO_ItemSlot (DDO_ItemSlot)

@@ -1,0 +1,3 @@
+BP_Item_Effects_Base (Self)
+    DefaultSceneRoot
+    BPC_ItemData

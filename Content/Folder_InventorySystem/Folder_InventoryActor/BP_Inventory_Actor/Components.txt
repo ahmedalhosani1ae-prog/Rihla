@@ -1,0 +1,5 @@
+BP_Inventory_Actor (Self)
+    DefaultSceneRoot
+        SpringArm
+            PointLight
+            SceneCaptureComponent2D (Texture_Target: RT_Inventory_Actor)

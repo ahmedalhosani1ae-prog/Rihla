@@ -1,0 +1,5 @@
+IsWeapon (Boolean)
+WeaponType (E_WeaponType)
+Damage (Integer)
+Armor (Integer)
+MaxDurability (Integer)
