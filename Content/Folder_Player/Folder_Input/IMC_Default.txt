@@ -278,7 +278,7 @@
 		],
 		[
 			"DefaultKeyMappings.Mappings.Mappings[9]",
-			"(Triggers=,Modifiers=,Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Inventory.IA_Inventory'\",Key=Tab,SettingBehavior=InheritSettingsFromAction,PlayerMappableKeySettings=None)"
+			"(Triggers=,Modifiers=,Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Inventory.IA_Inventory'\",Key=Esc,SettingBehavior=InheritSettingsFromAction,PlayerMappableKeySettings=None)"
 		],
 		[
 			"DefaultKeyMappings.Mappings.Mappings[9].Triggers",
