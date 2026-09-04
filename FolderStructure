@@ -1,0 +1,1292 @@
+I went back through the **current repo itself**, rather than just giving you a generic UE5 structure. Your current `Content` root really is only five areas, and the Inventory system has already grown into the largest/most interconnected part of the project. ([GitHub][1])
+
+Below is the **literal migration plan I'd use for Rihla right now**.
+
+---
+
+# 1. The final structure
+
+I recommend making your project look like this:
+
+```text
+Content/
+└── Rihla/
+    │
+    ├── Core/
+    │   ├── Framework/
+    │   ├── Components/
+    │   ├── Interfaces/
+    │   ├── FunctionLibraries/
+    │   ├── Structs/
+    │   ├── Enums/
+    │   └── Data/
+    │
+    ├── Player/
+    │   ├── Character/
+    │   ├── Controller/
+    │   ├── Input/
+    │   │   ├── Actions/
+    │   │   └── MappingContexts/
+    │   ├── Components/
+    │   ├── Animation/
+    │   └── UI/
+    │       └── HUD/
+    │
+    ├── Inventory/
+    │   ├── Core/
+    │   ├── Items/
+    │   ├── ItemData/
+    │   │   ├── DataTables/
+    │   │   ├── Structs/
+    │   │   └── Enums/
+    │   ├── Equipment/
+    │   ├── Containers/
+    │   ├── QuickSelect/
+    │   ├── Effects/
+    │   └── UI/
+    │       ├── Inventory/
+    │       ├── Item/
+    │       ├── Equipment/
+    │       ├── QuickSelect/
+    │       ├── Container/
+    │       └── Wardrobe/
+    │
+    ├── Interaction/
+    │   ├── Core/
+    │   ├── Interfaces/
+    │   ├── Actors/
+    │   └── UI/
+    │
+    ├── Building/
+    │   ├── Core/
+    │   ├── Buildables/
+    │   ├── Gizmos/
+    │   └── UI/
+    │
+    ├── Combat/
+    │   ├── Core/
+    │   ├── Weapons/
+    │   ├── Damage/
+    │   └── Effects/
+    │
+    ├── World/
+    │   ├── Levels/
+    │   ├── Actors/
+    │   ├── Environment/
+    │   └── Pickups/
+    │
+    ├── UI/
+    │   ├── HUD/
+    │   ├── Menus/
+    │   └── Common/
+    │
+    ├── Save/
+    │   ├── System/
+    │   ├── Data/
+    │   └── Structs/
+    │
+    ├── Audio/
+    ├── VFX/
+    ├── Materials/
+    ├── Animation/
+    │
+    └── Developer/
+```
+
+**Important:** don't create all the empty future folders yet. Create the folders as you need them.
+
+---
+
+# 2. Exact migration — current Content root
+
+Your current root is:
+
+```text
+Content/
+├── Folder_FunctionLibrary/
+├── Folder_InteractionSystem/
+├── Folder_InventorySystem/
+├── Folder_Player/
+└── Folder_SaveSystem/
+```
+
+([GitHub][1])
+
+Change to:
+
+```text
+Content/
+└── Rihla/
+    ├── Core/
+    ├── Interaction/
+    ├── Inventory/
+    ├── Player/
+    └── Save/
+```
+
+### Move:
+
+```text
+Folder_FunctionLibrary
+→ Rihla/Core/FunctionLibraries
+
+Folder_InteractionSystem
+→ Rihla/Interaction
+
+Folder_InventorySystem
+→ Rihla/Inventory
+
+Folder_Player
+→ Rihla/Player
+
+Folder_SaveSystem
+→ Rihla/Save
+```
+
+I strongly recommend the `Rihla` root.
+
+That means later you can have:
+
+```text
+Content/Rihla/
+Content/ThirdParty/
+Content/Developer/
+```
+
+without everything being dumped directly into `Content`.
+
+---
+
+# 3. Function Library
+
+Currently:
+
+```text
+Folder_FunctionLibrary/
+└── BPFL_UniversalFunctions
+```
+
+([GitHub][1])
+
+Move:
+
+```text
+BPFL_UniversalFunctions
+→
+Rihla/Core/FunctionLibraries/BPFL_UniversalFunctions
+```
+
+### BUT
+
+Don't turn this into a dumping ground.
+
+If later you have:
+
+```text
+GetItemData
+GetWeaponData
+GetPlayerStats
+GetInteractionTarget
+```
+
+don't automatically put all of them into `BPFL_UniversalFunctions`.
+
+For example:
+
+```text
+Rihla/
+├── Core/
+│   └── FunctionLibraries/
+│       └── BPFL_UniversalFunctions
+│
+└── Inventory/
+    └── Core/
+        └── BPFL_Inventory
+```
+
+The rule should be:
+
+> **If the function only makes sense for Inventory, it belongs to Inventory.**
+
+---
+
+# 4. Player — exact migration
+
+Your current Player folder contains:
+
+```text
+Folder_Player/
+├── BP_ThirdPersonCharacter
+├── BP_ThirdPersonGameMode
+├── BP_ThirdPersonPlayerController
+├── Folder_Input/
+└── Folder_UI/
+    └── WBP_PlayerHUD
+```
+
+([GitHub][2])
+
+Move them to:
+
+```text
+Rihla/Player/
+│
+├── Character/
+│   └── BP_ThirdPersonCharacter
+│
+├── Controller/
+│   └── BP_ThirdPersonPlayerController
+│
+├── Framework/
+│   └── BP_ThirdPersonGameMode
+│
+├── Input/
+│   ├── Actions/
+│   └── MappingContexts/
+│
+└── UI/
+    └── HUD/
+        └── WBP_PlayerHUD
+```
+
+### One correction to my previous answer
+
+I'd actually keep `GameMode` under **Player/Framework** for now rather than moving it to Core.
+
+Why?
+
+Because you currently only have one game mode, and it's closely tied to your player setup.
+
+Later, if Rihla gets multiple game modes/world states, we can move it.
+
+---
+
+# 5. Rename the template names
+
+I recommend doing this **now**, while the project is small.
+
+### Rename
+
+```text
+BP_ThirdPersonCharacter
+→ BP_RihlaCharacter
+
+BP_ThirdPersonPlayerController
+→ BP_RihlaPlayerController
+
+BP_ThirdPersonGameMode
+→ BP_RihlaGameMode
+```
+
+Your C++ equivalents are already named:
+
+```text
+RihlaCharacter
+RihlaPlayerController
+RihlaGameMode
+```
+
+so having the Blueprint versions still called `ThirdPerson...` is unnecessarily confusing. Your C++ tree confirms that those classes are already Rihla-specific. ([GitHub][3])
+
+---
+
+# 6. Inventory — this is the big one
+
+Your current Inventory root is:
+
+```text
+Folder_InventorySystem/
+├── BPC_CharacterEquipment
+├── BPC_Inventory
+├── BPC_QuickSelect
+├── DDO_ItemSlot
+├── Folder_Containers
+├── Folder_InventoryActor
+├── Folder_ItemData
+├── Folder_ItemEffects
+├── Folder_Items
+└── Folder_UI
+```
+
+([GitHub][4])
+
+I'd turn it into:
+
+```text
+Inventory/
+│
+├── Core/
+│
+├── Items/
+│
+├── ItemData/
+│
+├── Equipment/
+│
+├── Containers/
+│
+├── QuickSelect/
+│
+├── Effects/
+│
+└── UI/
+```
+
+Now let's move **every current asset**.
+
+---
+
+# 7. Inventory/Core
+
+Current:
+
+```text
+BPC_Inventory
+DDO_ItemSlot
+```
+
+Move:
+
+```text
+BPC_Inventory
+→ Inventory/Core/BPC_Inventory
+
+DDO_ItemSlot
+→ Inventory/Core/DDO_ItemSlot
+```
+
+This is the actual backbone of your inventory.
+
+Your `BPC_Inventory` is doing things like inventory management, item lookup, equipping, dropping, etc., so it belongs at the center of the feature.
+
+---
+
+# 8. Inventory/Equipment
+
+Current:
+
+```text
+BPC_CharacterEquipment
+```
+
+Move:
+
+```text
+BPC_CharacterEquipment
+→ Inventory/Equipment/BPC_CharacterEquipment
+```
+
+Eventually:
+
+```text
+Equipment/
+├── BPC_CharacterEquipment
+├── Data/
+└── Components/
+```
+
+if equipment grows.
+
+---
+
+# 9. Inventory/QuickSelect
+
+You currently have:
+
+```text
+BPC_QuickSelect
+```
+
+Move:
+
+```text
+BPC_QuickSelect
+→ Inventory/QuickSelect/BPC_QuickSelect
+```
+
+And later the Quick Select widgets will live alongside it conceptually:
+
+```text
+Inventory/
+└── QuickSelect/
+```
+
+with the UI technically under:
+
+```text
+Inventory/UI/QuickSelect/
+```
+
+I **wouldn't** put the Widget Blueprint directly beside the component.
+
+---
+
+# 10. Inventory/Containers
+
+Your current container folder contains:
+
+```text
+BP_Container_Base
+S_ContainerSFX
+```
+
+([GitHub][5])
+
+Move:
+
+```text
+BP_Container_Base
+→ Inventory/Containers/BP_Container_Base
+
+S_ContainerSFX
+→ Inventory/Containers/S_ContainerSFX
+```
+
+Eventually:
+
+```text
+Containers/
+├── BP_Container_Base
+├── Structs/
+│   └── S_ContainerSFX
+└── Data/
+```
+
+But **don't create `Structs` yet** for one struct. That's unnecessary nesting.
+
+---
+
+# 11. Inventory/Items
+
+Current:
+
+```text
+Folder_Items/
+└── BP_Item_Base
+```
+
+([GitHub][4])
+
+Move:
+
+```text
+BP_Item_Base
+→ Inventory/Items/BP_Item_Base
+```
+
+Then when you actually create item actors:
+
+```text
+Inventory/
+└── Items/
+    ├── Base/
+    │   └── BP_Item_Base
+    │
+    ├── Weapons/
+    │   ├── Swords/
+    │   ├── Spears/
+    │   └── GreatWeapons/
+    │
+    ├── Bows/
+    ├── Shields/
+    ├── Armor/
+    ├── Materials/
+    └── Consumables/
+```
+
+**Don't create these subfolders until you have actual assets for them.**
+
+---
+
+# 12. Inventory/Effects
+
+Current:
+
+```text
+Folder_ItemEffects/
+└── BP_Item_Effects_Base
+```
+
+([GitHub][4])
+
+Move:
+
+```text
+BP_Item_Effects_Base
+→ Inventory/Effects/BP_Item_Effects_Base
+```
+
+Eventually:
+
+```text
+Effects/
+├── BP_Item_Effects_Base
+├── Consumables/
+├── Status/
+└── Temporary/
+```
+
+---
+
+# 13. ItemData — exact migration
+
+This is one of the most important reorganizations.
+
+Your current ItemData contains:
+
+```text
+BPC_ItemData
+DT_CharacterEquipment
+DT_ItemData
+
+E_EquipmentCategory
+E_ItemCategory
+E_ItemRarity
+E_WeaponType
+
+S_ItemEffect
+S_ItemInfo
+S_ItemMeshInfo
+S_ItemSFX
+S_ItemSlot
+S_WeaponInfo
+```
+
+([GitHub][6])
+
+Make:
+
+```text
+Inventory/
+└── ItemData/
+    │
+    ├── DataTables/
+    │   ├── DT_CharacterEquipment
+    │   └── DT_ItemData
+    │
+    ├── Structs/
+    │   ├── S_ItemEffect
+    │   ├── S_ItemInfo
+    │   ├── S_ItemMeshInfo
+    │   ├── S_ItemSFX
+    │   ├── S_ItemSlot
+    │   └── S_WeaponInfo
+    │
+    ├── Enums/
+    │   ├── E_EquipmentCategory
+    │   ├── E_ItemCategory
+    │   ├── E_ItemRarity
+    │   └── E_WeaponType
+    │
+    └── Components/
+        └── BPC_ItemData
+```
+
+### Exact paths
+
+```text
+BPC_ItemData
+→ Inventory/ItemData/Components/BPC_ItemData
+
+DT_CharacterEquipment
+→ Inventory/ItemData/DataTables/DT_CharacterEquipment
+
+DT_ItemData
+→ Inventory/ItemData/DataTables/DT_ItemData
+
+E_EquipmentCategory
+→ Inventory/ItemData/Enums/E_EquipmentCategory
+
+E_ItemCategory
+→ Inventory/ItemData/Enums/E_ItemCategory
+
+E_ItemRarity
+→ Inventory/ItemData/Enums/E_ItemRarity
+
+E_WeaponType
+→ Inventory/ItemData/Enums/E_WeaponType
+
+S_ItemEffect
+→ Inventory/ItemData/Structs/S_ItemEffect
+
+S_ItemInfo
+→ Inventory/ItemData/Structs/S_ItemInfo
+
+S_ItemMeshInfo
+→ Inventory/ItemData/Structs/S_ItemMeshInfo
+
+S_ItemSFX
+→ Inventory/ItemData/Structs/S_ItemSFX
+
+S_ItemSlot
+→ Inventory/ItemData/Structs/S_ItemSlot
+
+S_WeaponInfo
+→ Inventory/ItemData/Structs/S_WeaponInfo
+```
+
+This is **much** better than having a single folder containing 13 unrelated asset types.
+
+---
+
+# 14. InventoryActor
+
+Your current repo has:
+
+```text
+Folder_InventoryActor
+```
+
+but GitHub currently doesn't expose a useful asset listing for it from the page I could inspect. ([GitHub][4])
+
+If those are actual world actors representing inventory items/pickups, I would move them to:
+
+```text
+Inventory/
+└── Items/
+    └── World/
+```
+
+So:
+
+```text
+Folder_InventoryActor
+→ Inventory/Items/World
+```
+
+**unless** those actors are actually containers. If they're container actors, put them under `Containers/`.
+
+The distinction should be:
+
+```text
+Items/World
+= physical item lying in the world
+
+Containers
+= chest/container/storage object
+```
+
+---
+
+# 15. Inventory UI — exact migration
+
+This is where your current project has the most obvious opportunity.
+
+Your current UI contains:
+
+```text
+WBP_ContainerDisplay
+WBP_ContainerUI
+WBP_EquipmentSlot
+WBP_EquipmentTool
+WBP_InventorySlot
+WBP_InventoryUI
+WBP_ItemAction
+WBP_ItemFilter
+WBP_ItemSlider
+WBP_ItemSlotPreview
+WBP_ItemTool
+WBP_PlayerDisplay
+WBP_QuickSelectMenu
+WBP_QuickSelectSlot
+WBP_SelectedSlot
+WBP_WardrobeUI
+```
+
+([GitHub][7])
+
+I'd move them exactly like this:
+
+### Inventory
+
+```text
+WBP_InventoryUI
+→ Inventory/UI/Inventory/WBP_InventoryUI
+
+WBP_InventorySlot
+→ Inventory/UI/Inventory/WBP_InventorySlot
+
+WBP_ItemFilter
+→ Inventory/UI/Inventory/WBP_ItemFilter
+
+WBP_SelectedSlot
+→ Inventory/UI/Inventory/WBP_SelectedSlot
+```
+
+### Item
+
+```text
+WBP_ItemTool
+→ Inventory/UI/Item/WBP_ItemTool
+
+WBP_ItemAction
+→ Inventory/UI/Item/WBP_ItemAction
+
+WBP_ItemSlider
+→ Inventory/UI/Item/WBP_ItemSlider
+
+WBP_ItemSlotPreview
+→ Inventory/UI/Item/WBP_ItemSlotPreview
+```
+
+### Equipment
+
+```text
+WBP_EquipmentSlot
+→ Inventory/UI/Equipment/WBP_EquipmentSlot
+
+WBP_EquipmentTool
+→ Inventory/UI/Equipment/WBP_EquipmentTool
+```
+
+### Quick Select
+
+```text
+WBP_QuickSelectMenu
+→ Inventory/UI/QuickSelect/WBP_QuickSelectMenu
+
+WBP_QuickSelectSlot
+→ Inventory/UI/QuickSelect/WBP_QuickSelectSlot
+```
+
+### Container
+
+```text
+WBP_ContainerUI
+→ Inventory/UI/Container/WBP_ContainerUI
+
+WBP_ContainerDisplay
+→ Inventory/UI/Container/WBP_ContainerDisplay
+```
+
+### Wardrobe
+
+```text
+WBP_WardrobeUI
+→ Inventory/UI/Wardrobe/WBP_WardrobeUI
+```
+
+### Player
+
+This one is the exception:
+
+```text
+WBP_PlayerDisplay
+```
+
+I'd move it to:
+
+```text
+Player/UI/Wardrobe/
+```
+
+**if it is specifically displaying the player character in the wardrobe/equipment screen.**
+
+If it's actually generic inventory UI, leave it in Inventory.
+
+---
+
+# 16. `Folder_MUI`
+
+Your Inventory UI currently also contains:
+
+```text
+Folder_MUI
+```
+
+([GitHub][7])
+
+I would **not** automatically keep this name.
+
+If `MUI` means your common/shared UI widgets, rename it:
+
+```text
+UI/Common/
+```
+
+or, if they're specifically inventory common widgets:
+
+```text
+Inventory/UI/Common/
+```
+
+The name `MUI` isn't obvious enough when you come back to the project six months later.
+
+---
+
+# 17. Interaction — exact migration
+
+Current:
+
+```text
+Folder_InteractionSystem/
+├── BPC_Interaction
+├── BPI_Interaction
+└── Folder_UI
+```
+
+([GitHub][8])
+
+Change to:
+
+```text
+Interaction/
+├── Core/
+│   └── BPC_Interaction
+│
+├── Interfaces/
+│   └── BPI_Interaction
+│
+└── UI/
+```
+
+If `Folder_UI` contains interaction prompts/widgets:
+
+```text
+Folder_UI
+→ Interaction/UI
+```
+
+Later, if you add physical interactable actors:
+
+```text
+Interaction/
+└── Actors/
+    ├── Doors/
+    ├── Switches/
+    ├── NPC/
+    └── Objects/
+```
+
+---
+
+# 18. Save — exact migration
+
+Current:
+
+```text
+Folder_SaveSystem/
+├── BPFL_SaveSystem
+├── BPI_SaveSystem
+├── Folder_Structs
+├── GIB_MyGame
+├── SGB_LevelData
+└── SGB_PlayerData
+```
+
+([GitHub][9])
+
+I'd make:
+
+```text
+Save/
+│
+├── System/
+│   ├── BPFL_SaveSystem
+│   ├── BPI_SaveSystem
+│   └── GIB_Rihla
+│
+├── Data/
+│   ├── SGB_LevelData
+│   └── SGB_PlayerData
+│
+└── Structs/
+```
+
+### Exact paths
+
+```text
+BPFL_SaveSystem
+→ Save/System/BPFL_SaveSystem
+
+BPI_SaveSystem
+→ Save/System/BPI_SaveSystem
+
+GIB_MyGame
+→ Save/System/GIB_Rihla
+
+SGB_LevelData
+→ Save/Data/SGB_LevelData
+
+SGB_PlayerData
+→ Save/Data/SGB_PlayerData
+
+Folder_Structs
+→ Save/Structs
+```
+
+And yes, I'd rename:
+
+```text
+GIB_MyGame
+→ GIB_Rihla
+```
+
+---
+
+# 19. C++ — exact migration
+
+Your current C++ folder is completely flat:
+
+```text
+Source/Rihla/
+├── BuildComponent
+├── BuildGizmoActor
+├── BuildableActor
+├── PlayerStatsComponent
+├── Rihla
+├── RihlaCharacter
+├── RihlaGameMode
+└── RihlaPlayerController
+```
+
+([GitHub][3])
+
+I'd change it to:
+
+```text
+Source/
+└── Rihla/
+    │
+    ├── Core/
+    │   ├── Rihla.cpp
+    │   ├── Rihla.h
+    │   ├── RihlaGameMode.cpp
+    │   └── RihlaGameMode.h
+    │
+    ├── Player/
+    │   ├── RihlaCharacter.cpp
+    │   ├── RihlaCharacter.h
+    │   ├── RihlaPlayerController.cpp
+    │   └── RihlaPlayerController.h
+    │
+    ├── PlayerStats/
+    │   ├── PlayerStatsComponent.cpp
+    │   └── PlayerStatsComponent.h
+    │
+    └── Building/
+        ├── BuildComponent.cpp
+        ├── BuildComponent.h
+        ├── BuildGizmoActor.cpp
+        ├── BuildGizmoActor.h
+        ├── BuildableActor.cpp
+        └── BuildableActor.h
+```
+
+### Exact moves
+
+```text
+Rihla.cpp/.h
+→ Source/Rihla/Core/
+
+RihlaGameMode.cpp/.h
+→ Source/Rihla/Core/
+
+RihlaCharacter.cpp/.h
+→ Source/Rihla/Player/
+
+RihlaPlayerController.cpp/.h
+→ Source/Rihla/Player/
+
+PlayerStatsComponent.cpp/.h
+→ Source/Rihla/PlayerStats/
+
+BuildComponent.cpp/.h
+→ Source/Rihla/Building/
+
+BuildGizmoActor.cpp/.h
+→ Source/Rihla/Building/
+
+BuildableActor.cpp/.h
+→ Source/Rihla/Building/
+```
+
+Keep:
+
+```text
+Rihla.Build.cs
+```
+
+at:
+
+```text
+Source/Rihla/Rihla.Build.cs
+```
+
+---
+
+# 20. One change I would NOT make
+
+Don't move `PlayerStatsComponent` into:
+
+```text
+Player/Components/
+```
+
+**yet.**
+
+I'd use:
+
+```text
+PlayerStats/
+```
+
+because your stats system is likely going to grow into a proper gameplay system:
+
+```text
+PlayerStats/
+├── PlayerStatsComponent
+├── Health
+├── Stamina
+├── Battery
+└── Data
+```
+
+That's more scalable.
+
+---
+
+# 21. Don't create `Combat` yet
+
+I'd create:
+
+```text
+Combat/
+```
+
+only when you actually start implementing combat.
+
+Same for:
+
+```text
+World/
+Building/
+Audio/
+VFX/
+Materials/
+```
+
+You already have Building C++ code, though, so:
+
+```text
+Building/
+```
+
+is justified **right now**.
+
+---
+
+# 22. The final result using your CURRENT assets
+
+After moving everything you already have, I want your project to approximately look like:
+
+```text
+Content/
+└── Rihla/
+    │
+    ├── Core/
+    │   └── FunctionLibraries/
+    │       └── BPFL_UniversalFunctions
+    │
+    ├── Player/
+    │   ├── Character/
+    │   │   └── BP_RihlaCharacter
+    │   ├── Controller/
+    │   │   └── BP_RihlaPlayerController
+    │   ├── Framework/
+    │   │   └── BP_RihlaGameMode
+    │   ├── Input/
+    │   └── UI/
+    │       └── HUD/
+    │           └── WBP_PlayerHUD
+    │
+    ├── Inventory/
+    │   ├── Core/
+    │   │   ├── BPC_Inventory
+    │   │   └── DDO_ItemSlot
+    │   │
+    │   ├── Items/
+    │   │   └── BP_Item_Base
+    │   │
+    │   ├── ItemData/
+    │   │   ├── Components/
+    │   │   │   └── BPC_ItemData
+    │   │   ├── DataTables/
+    │   │   │   ├── DT_ItemData
+    │   │   │   └── DT_CharacterEquipment
+    │   │   ├── Enums/
+    │   │   │   ├── E_EquipmentCategory
+    │   │   │   ├── E_ItemCategory
+    │   │   │   ├── E_ItemRarity
+    │   │   │   └── E_WeaponType
+    │   │   └── Structs/
+    │   │       ├── S_ItemEffect
+    │   │       ├── S_ItemInfo
+    │   │       ├── S_ItemMeshInfo
+    │   │       ├── S_ItemSFX
+    │   │       ├── S_ItemSlot
+    │   │       └── S_WeaponInfo
+    │   │
+    │   ├── Equipment/
+    │   │   └── BPC_CharacterEquipment
+    │   │
+    │   ├── Containers/
+    │   │   ├── BP_Container_Base
+    │   │   └── S_ContainerSFX
+    │   │
+    │   ├── QuickSelect/
+    │   │   └── BPC_QuickSelect
+    │   │
+    │   ├── Effects/
+    │   │   └── BP_Item_Effects_Base
+    │   │
+    │   └── UI/
+    │       ├── Inventory/
+    │       │   ├── WBP_InventoryUI
+    │       │   ├── WBP_InventorySlot
+    │       │   ├── WBP_ItemFilter
+    │       │   └── WBP_SelectedSlot
+    │       │
+    │       ├── Item/
+    │       │   ├── WBP_ItemTool
+    │       │   ├── WBP_ItemAction
+    │       │   ├── WBP_ItemSlider
+    │       │   └── WBP_ItemSlotPreview
+    │       │
+    │       ├── Equipment/
+    │       │   ├── WBP_EquipmentSlot
+    │       │   └── WBP_EquipmentTool
+    │       │
+    │       ├── QuickSelect/
+    │       │   ├── WBP_QuickSelectMenu
+    │       │   └── WBP_QuickSelectSlot
+    │       │
+    │       ├── Container/
+    │       │   ├── WBP_ContainerUI
+    │       │   └── WBP_ContainerDisplay
+    │       │
+    │       └── Wardrobe/
+    │           └── WBP_WardrobeUI
+    │
+    ├── Interaction/
+    │   ├── Core/
+    │   │   └── BPC_Interaction
+    │   ├── Interfaces/
+    │   │   └── BPI_Interaction
+    │   └── UI/
+    │
+    └── Save/
+        ├── System/
+        │   ├── BPFL_SaveSystem
+        │   ├── BPI_SaveSystem
+        │   └── GIB_Rihla
+        ├── Data/
+        │   ├── SGB_LevelData
+        │   └── SGB_PlayerData
+        └── Structs/
+```
+
+That is the structure I'd actually use for your project **today**, based on what is currently in the repository. ([GitHub][1])
+
+---
+
+# 23. One important Unreal warning
+
+**Don't blindly drag everything around and assume it is harmless.**
+
+Because these are Unreal assets, references between Blueprints, DataTables, structs, widgets, etc. matter.
+
+For example, your Inventory system has explicit dependencies between things like:
+
+```text
+BPC_Inventory
+    ↓
+DT_ItemData
+    ↓
+S_ItemInfo
+    ↓
+item classes
+    ↓
+WBP_ItemTool
+    ↓
+Quick Select
+```
+
+So when you reorganize, Unreal needs to update asset references.
+
+### Safest method
+
+Do this **inside Unreal's Content Browser**, not by moving files in Windows/Finder.
+
+Then:
+
+1. Close unnecessary editors.
+2. Make a Git commit first.
+3. Move one system.
+4. Let Unreal update references.
+5. Save all.
+6. Close/reopen the project.
+7. Compile C++.
+8. Test Inventory.
+9. Commit again.
+
+---
+
+# 24. I would do the reorganization in 6 commits
+
+Since your repo currently has only a couple of commits, this is actually a great time to clean it up. The GitHub repo currently shows only **2 commits**. ([GitHub][10])
+
+I'd make:
+
+```text
+Commit 1
+"Reorganize Content root"
+
+Commit 2
+"Reorganize Inventory system"
+
+Commit 3
+"Reorganize Player and Interaction systems"
+
+Commit 4
+"Reorganize Save system"
+
+Commit 5
+"Reorganize C++ source"
+
+Commit 6
+"Rename template assets to Rihla"
+```
+
+That way if something breaks, you know **exactly which structural change caused it**.
+
+---
+
+## And one thing I'd change from my previous recommendation
+
+I **wouldn't create a giant `UI/` at the root** and move all UI into it.
+
+For Rihla, UI belongs with the feature it serves.
+
+So:
+
+```text
+Inventory/UI/
+Player/UI/
+Interaction/UI/
+```
+
+is better than:
+
+```text
+UI/
+├── Inventory/
+├── Player/
+└── Interaction/
+```
+
+because when you're working on Inventory, **everything related to Inventory is in one place**.
+
+That's particularly important for the system you've built: `BPC_Inventory`, `DT_ItemData`, `S_ItemSlot`, `WBP_ItemTool`, `WBP_InventoryUI`, `WBP_QuickSelectMenu`, etc. are all parts of one gameplay feature even though they are technically different asset types.
+
+**That's the architecture I'd stick with for Rihla going forward.**
