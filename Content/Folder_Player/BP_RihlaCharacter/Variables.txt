@@ -1,0 +1,5 @@
+QuickSelectMeleeHeld (Boolean)
+QuickSelectDefensiveHeld (Boolean)
+QuickSelectAttachmentHeld (Boolean)
+WalkSpeed (Float (Default Value: 380))
+SprintSpeed (Float (Default Value: 530))

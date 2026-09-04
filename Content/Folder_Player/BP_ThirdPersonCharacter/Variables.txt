@@ -1,3 +1,0 @@
-QuickSelectMeleeHeld (Boolean)
-QuickSelectDefensiveHeld (Boolean)
-QuickSelectAttachmentHeld (Boolean)

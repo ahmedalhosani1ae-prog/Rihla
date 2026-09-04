@@ -2,7 +2,7 @@
 	"Tagged": [
 		[
 			"DefaultKeyMappings",
-			"(Mappings=((Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Jump.IA_Jump'\",Key=SpaceBar),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Jump.IA_Jump'\",Key=Gamepad_FaceButton_Bottom),(Modifiers=(\"/Script/EnhancedInput.InputModifierSwizzleAxis'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_3'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=W),(Modifiers=(\"/Script/EnhancedInput.InputModifierSwizzleAxis'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_4'\",\"/Script/EnhancedInput.InputModifierNegate'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierNegate_0'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=S),(Modifiers=(\"/Script/EnhancedInput.InputModifierNegate'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierNegate_3'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=A),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=D),(Modifiers=(\"/Script/EnhancedInput.InputModifierDeadZone'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierDeadZone_0'\",\"/Script/EnhancedInput.InputModifierScalar'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierScalar_0'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=Gamepad_Left2D),(Modifiers=(\"/Script/EnhancedInput.InputModifierDeadZone'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierDeadZone_1'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Look.IA_Look'\",Key=Gamepad_Right2D),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Interact.IA_Interact'\",Key=E),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Inventory.IA_Inventory'\",Key=Tab),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_QuickSelectMelee.IA_QuickSelectMelee'\",Key=One),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_QuickSelectDefensive.IA_QuickSelectDefensive'\",Key=Two),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_QuickSelectAttachment.IA_QuickSelectAttachment'\",Key=Three)))"
+			"(Mappings=((Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Jump.IA_Jump'\",Key=SpaceBar),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Jump.IA_Jump'\",Key=Gamepad_FaceButton_Bottom),(Modifiers=(\"/Script/EnhancedInput.InputModifierSwizzleAxis'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_3'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=W),(Modifiers=(\"/Script/EnhancedInput.InputModifierSwizzleAxis'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_4'\",\"/Script/EnhancedInput.InputModifierNegate'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierNegate_0'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=S),(Modifiers=(\"/Script/EnhancedInput.InputModifierNegate'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierNegate_3'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=A),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=D),(Modifiers=(\"/Script/EnhancedInput.InputModifierDeadZone'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierDeadZone_0'\",\"/Script/EnhancedInput.InputModifierScalar'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierScalar_0'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Move.IA_Move'\",Key=Gamepad_Left2D),(Modifiers=(\"/Script/EnhancedInput.InputModifierDeadZone'/Game/Player/Input/IMC_Default.IMC_Default:InputModifierDeadZone_1'\"),Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Look.IA_Look'\",Key=Gamepad_Right2D),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Interact.IA_Interact'\",Key=E),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Inventory.IA_Inventory'\",Key=Tab),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_QuickSelectMelee.IA_QuickSelectMelee'\",Key=One),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_QuickSelectDefensive.IA_QuickSelectDefensive'\",Key=Two),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_QuickSelectAttachment.IA_QuickSelectAttachment'\",Key=Three),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Crouch.IA_Crouch'\",Key=LeftControl),(Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Sprint.IA_Sprint'\",Key=LeftShift)))"
 		],
 		[
 			"DefaultKeyMappings.Mappings.Mappings[0]",
@@ -278,7 +278,7 @@
 		],
 		[
 			"DefaultKeyMappings.Mappings.Mappings[9]",
-			"(Triggers=,Modifiers=,Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Inventory.IA_Inventory'\",Key=Esc,SettingBehavior=InheritSettingsFromAction,PlayerMappableKeySettings=None)"
+			"(Triggers=,Modifiers=,Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Inventory.IA_Inventory'\",Key=Tab,SettingBehavior=InheritSettingsFromAction,PlayerMappableKeySettings=None)"
 		],
 		[
 			"DefaultKeyMappings.Mappings.Mappings[9].Triggers",
@@ -354,6 +354,46 @@
 		],
 		[
 			"DefaultKeyMappings.Mappings.Mappings[12].PlayerMappableKeySettings",
+			"None"
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[13]",
+			"(Triggers=,Modifiers=,Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Crouch.IA_Crouch'\",Key=LeftControl,SettingBehavior=InheritSettingsFromAction,PlayerMappableKeySettings=None)"
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[13].Triggers",
+			""
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[13].Modifiers",
+			""
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[13].SettingBehavior",
+			"InheritSettingsFromAction"
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[13].PlayerMappableKeySettings",
+			"None"
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[14]",
+			"(Triggers=,Modifiers=,Action=\"/Script/EnhancedInput.InputAction'/Game/Player/Input/Actions/IA_Sprint.IA_Sprint'\",Key=LeftShift,SettingBehavior=InheritSettingsFromAction,PlayerMappableKeySettings=None)"
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[14].Triggers",
+			""
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[14].Modifiers",
+			""
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[14].SettingBehavior",
+			"InheritSettingsFromAction"
+		],
+		[
+			"DefaultKeyMappings.Mappings.Mappings[14].PlayerMappableKeySettings",
 			"None"
 		],
 		[
