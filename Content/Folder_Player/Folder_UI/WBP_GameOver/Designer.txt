@@ -1,0 +1,9 @@
+WBP_GameOver
+    CanvasPanel
+        Background Blur
+        Image
+        Text
+        RestartButton (IsVariable)
+            Text
+        MainMenuButton (IsVariable)
+            Text
