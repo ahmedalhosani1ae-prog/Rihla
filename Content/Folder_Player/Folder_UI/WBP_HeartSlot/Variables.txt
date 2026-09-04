@@ -1,0 +1,4 @@
+HeartIndex (Integer (Instance Editable, Expose On Spawn))
+CurrentHealth (Integer (Instance Editable, Expose On Spawn))
+MaxHealth (Integer (Instance Editable, Expose On Spawn))
+TemporaryHealth (Integer (Instance Editable, Expose On Spawn))

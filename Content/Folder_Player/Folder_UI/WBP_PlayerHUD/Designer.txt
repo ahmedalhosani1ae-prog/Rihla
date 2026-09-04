@@ -1,3 +1,9 @@
 WBP_PlayerHUD
     WBP_InteractionUI (IsVariable)
-    WBP_HotbarDisplay (IsVariable)
+    HealthBox (IsVariable)
+    BatteryBox (IsVariable)
+        BatteryCellsBox (IsVariable)
+    StaminaOverlay (IsVariable)
+        StaminaBackground (IsVariable)
+        StaminaProgressBar (IsVariable)
+        TemporaryStaminaProgressBar (IsVariable)

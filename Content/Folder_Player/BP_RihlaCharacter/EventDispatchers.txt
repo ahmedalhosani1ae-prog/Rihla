@@ -1,0 +1,4 @@
+OnStaminaDisplayRequested (Input: bShow (Boolean))
+OnBatteryDisplayRequested (Input: bShow (Boolean))
+OnBatteryDepleted
+OnGameOverRequested

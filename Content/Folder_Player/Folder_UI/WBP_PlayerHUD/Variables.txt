@@ -1,0 +1,4 @@
+Player Stats (PlayerStatsComponent)
+bStatsBound (Boolean)
+StaminaHideHandle (Timer Handle)
+BatteryHideHandle (Timer Handle)
