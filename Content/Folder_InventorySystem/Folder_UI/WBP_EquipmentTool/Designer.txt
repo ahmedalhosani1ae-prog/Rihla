@@ -5,4 +5,4 @@ WBP_EquipmentTool
                 Border_Actions
                     VerticalBox
                         Button_Unequip (Index 0) (IsVariable)
-                        Button_Drop (Index 2) (IsVariable)
+                        Button_Drop (Index 1) (IsVariable)
