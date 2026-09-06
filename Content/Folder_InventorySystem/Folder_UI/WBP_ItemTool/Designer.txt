@@ -4,8 +4,8 @@ WBP_ItemTool
             HorizontalBox
                 Border
                     VerticalBox
-                        Button_Use (IsVariable)
-                        Button_Drop (IsVariable)
+                        Button_Use (IsVariable) (Action Text: Use, Index: 0)
+                        Button_Drop (IsVariable) (Action Text: Drop, Index: 1)
                 Border
                     VerticalBox
                         TXT_ItemName (IsVariable)
