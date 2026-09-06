@@ -1,4 +1,4 @@
-# Rihla — Remaining Work (Canonical v4)
+# Rihla — Remaining Work (Canonical v5)
 
 **Engine:** Unreal Engine 5.7.4  
 **Project:** Rihla  
@@ -7,7 +7,7 @@
 
 This is the canonical planning document for the remaining Rihla work.
 
-It replaces the earlier A–O planning documents.
+It replaces the earlier A–O planning documents and incorporates the audit of the current Rihla project ZIP.
 
 The project already has substantial inventory/quick-select work completed, plus native C++ `PlayerStatsComponent` and `BuildComponent` foundations. This document is written around those existing systems and is intended to prevent later systems from introducing competing sources of truth.
 
@@ -38,23 +38,32 @@ The following rules are mandatory:
 
 ---
 
-# 1. Already Completed
+# 1. Already Completed / Verified in the Current Project
 
-The following systems have already been implemented and verified and should not be rebuilt:
+The current project ZIP confirms that the following foundations are present and should not be rebuilt:
 
 - Hotbar removal.
 - Quick-select system creation.
 - Equipment highlight system.
 - Equipped items remain in their normal inventory grid slot.
 - No separate equipment circles.
-- Drop duplication bug fixed.
-- Phantom inventory-slot bug fixed.
+- Drop duplication bug fixed in the current gameplay flow.
+- Phantom inventory-slot bug fixed in the current gameplay flow.
 - Pause-on-open.
-- Pause toggle bug fixed.
+- Pause toggle behavior.
 - Quick-select carousel visual polish.
 - Quick-select Widget Animation scale/opacity.
 - Smooth ScrollBox scrolling.
 - Quick-select slot count reflects the number of relevant items.
+- `S_ItemSlot` contains `ItemInstanceID`.
+- `S_ItemSlot` contains durability, fusion, usage, and cooking-override state.
+- `BPC_Inventory` contains `FindSlotByInstanceID`.
+- `BPC_Inventory` contains `EquipItemByInstanceID`.
+- Equipment/save data use instance-ID-based references in the current implementation.
+- Native `PlayerStatsComponent` exists and is attached to the Character.
+- Native `BuildComponent` exists and is attached to the Character.
+- `BuildComponent` has explicit build-state tracking and `SourceItemInstanceID`.
+- `OnBuildConfirmed` carries the inventory-source identity needed for the inventory/build handshake.
 
 ## Native C++ foundations already delivered
 
@@ -76,13 +85,14 @@ The native C++ component already provides:
 - `SetMaxStamina`.
 - `SetMaxBattery`.
 
-It is **not yet attached to the Character or consumed by gameplay/UI**, so that integration remains in Part A.
+It is already attached to the Character. Remaining work is gameplay/UI integration, policy cleanup, and save validation.
 
 ### `BuildComponent`
 
 The native C++ component already provides the live build foundation:
 
-- Enhanced Input self-binding with retry handling.
+- Enhanced Input self-binding/retry handling.
+- Explicit build state.
 - Grab.
 - Release/cancel.
 - Rotation.
@@ -96,7 +106,7 @@ The native C++ component already provides the live build foundation:
 - `OnBuildConfirmed`.
 - EndPlay cleanup.
 
-It is **not yet attached to the Character, configured with assets/Input Actions, or connected to `BPC_Inventory`**, so that integration remains in Part I.
+It is already attached to the Character. Remaining work is Input Action asset/configuration, collision/snap setup, buildable assets, and the `BPC_Inventory` transaction handshake.
 
 ---
 
@@ -439,6 +449,7 @@ Other systems must not observe a half-completed inventory transaction.
 
 The implementation order is:
 
+0. **Foundational cleanup / integration gates**
 1. **Part A — Player Stats**
 2. **Part B — Generic Quick Select**
 3. **Part C — Icon Tabs**
@@ -455,6 +466,15 @@ The implementation order is:
 14. **Part N — Durability / Weapon Breaking**
 15. **Part O — Sorting + Synchronization**
 
+Before Part A–O implementation continues, complete the current-project integration gates below:
+
+1. Fix container save data so persistent save structures do not depend on runtime `BPC_Inventory` references.
+2. Add/configure dedicated build-snap collision behavior.
+3. Create and wire the Build Input Actions required by `BuildComponent`.
+4. Remove/replace stale GameMode/template configuration and redirects.
+5. Finish the audit of every inventory mutation path so identity is `ItemInstanceID`, not array position.
+6. Establish the shared effective-item/effect resolution path.
+
 The Foundational Prerequisites in Section 3 should be established as needed before the affected parts are implemented.
 
 Parts M and N remain blocked until their gameplay prerequisites exist.
@@ -463,9 +483,113 @@ Part O remains last.
 
 ---
 
+# 4.5. Current-Project Integration Gates
+
+These were specifically identified from the current project ZIP and should be completed before the affected gameplay systems are treated as production-ready.
+
+## Gate 1 — Container save representation
+
+`S_ContainerData` currently mixes persistent container state with references to runtime inventory components.
+
+Persistent save data must represent state, not live `BPC_Inventory` objects.
+
+Replace the runtime-component reference representation with stable persistent container identity plus serialized inventory/container state.
+
+The runtime container actor/component may resolve or recreate its runtime inventory from that persistent record after load.
+
+## Gate 2 — Dedicated build snap collision
+
+`BuildComponent` currently uses a generic collision channel for snap detection.
+
+Create a dedicated build/snap collision channel and configure buildable geometry to respond explicitly to it.
+
+Initial intended behavior:
+
+```text
+Buildable snap geometry → Overlap
+Unrelated geometry      → Ignore
+```
+
+Do not make snapping depend on accidental `WorldDynamic` responses.
+
+## Gate 3 — Build Input Actions
+
+Create and assign:
+
+- `IA_BuildGrab`.
+- `IA_BuildRelease`.
+- `IA_BuildDetach`.
+- `IA_BuildRotationMode`.
+- `IA_BuildRotate`.
+- `IA_BuildHoldDistance`.
+
+Add the actions to the intended input mapping context.
+
+Do not create duplicate Character-level build bindings if `BuildComponent` is the owner of build input behavior.
+
+## Gate 4 — GameMode/template cleanup
+
+The current project still contains stale Third Person template paths/redirectors in configuration.
+
+Update the authoritative GameMode references to the current Rihla GameMode path.
+
+Then remove obsolete redirectors/references only after project-wide reference checking.
+
+Also clean stale template naming such as the old project-name metadata where appropriate.
+
+This is cleanup/integration work, not a gameplay-system rewrite.
+
+## Gate 5 — Complete identity audit
+
+Array indices may still be used as temporary positional UI or lookup values.
+
+They must not be used as the identity of an item being mutated.
+
+Audit these operations especially:
+
+- Add.
+- Remove.
+- Drop.
+- Equip.
+- Unequip.
+- Use.
+- Transfer.
+- Move.
+- Build-source consumption.
+- Fusion.
+- Unfuse.
+- Durability damage.
+- Cooking.
+- Usage tracking.
+- Replacement/swap.
+
+The preferred pattern is:
+
+```text
+UI/temporary index
+    ↓
+resolve current ItemInstanceID
+    ↓
+authoritative BPC_Inventory operation
+```
+
+## Gate 6 — Effective-item resolution
+
+Before implementing systems that depend on fusion/cooking/durability, create the shared effective-value/effect API.
+
+At minimum:
+
+- `GetEffectiveDamage(ItemInstanceID)`.
+- `GetEffectiveDefense(ItemInstanceID)`.
+- `GetEffectiveItemEffects(ItemInstanceID)`.
+
+Callers should not independently reimplement override/fusion/effect resolution.
+
+---
+
 # Part A — Player Stats Foundation
 
-**Status:** Native C++ implementation already exists. The remaining work is Character integration, gameplay/UI access, and save integration.
+**Status:** Native C++ implementation exists and is attached to the Character. Remaining work is gameplay/UI integration, resource-policy cleanup, and save validation.
 
 ## Goal
 
@@ -1054,7 +1178,7 @@ Cancel changes nothing.
 
 # Part I — Ultrahand-Style Build System
 
-**Status:** Native C++ foundation already exists. Remaining work is Character/component setup, input/assets, and inventory handshake.
+**Status:** Native C++ foundation exists and is attached to the Character. Remaining work is Input Action assets, collision/snap configuration, buildable assets, and the inventory handshake.
 
 ## Goal
 
@@ -2105,7 +2229,35 @@ The remaining system is structurally complete when:
 
 ---
 
-# 9. Final Implementation Principle
+# 9. Current Audit Snapshot
+
+Based on the current Rihla project ZIP:
+
+| Area | Status | Notes |
+|---|---|---|
+| ItemInstanceID data model | 🟢 | Present in `S_ItemSlot`. |
+| Instance-based equipment | 🟢 | Current equipment flow contains instance-ID references. |
+| PlayerStatsComponent | 🟢 | Native component exists and is attached to Character. |
+| BuildComponent | 🟢 | Native foundation exists and is attached to Character. |
+| Build input assets | 🔴 | Required Build Input Actions are not yet present/wired. |
+| Build snap collision | 🔴 | Dedicated snap collision configuration is not yet established. |
+| Container save representation | 🔴 | Runtime inventory-component references must be removed from persistent save representation. |
+| Effective item resolution | 🟡 | Per-instance override/fusion data exists; centralized resolver still needs implementation. |
+| Durability mutation API | 🟡 | Data exists; authoritative `DamageItem(ItemInstanceID, Amount)` still needs implementation. |
+| Fusion gameplay | 🟡 | `FusedMaterialID` foundation exists; authoritative fusion/unfusion flow remains. |
+| Cooking gameplay | 🟡 | Cooking override fields exist; atomic cooking transaction remains. |
+| Save/load expansion | 🟡 | Core instance-aware data exists; complete persistence validation remains. |
+| Context-sensitive Quick Select | 🟡 | Current category system exists; actual gameplay-state resolver waits on bow/throw systems. |
+| Sorting/synchronization | ⏸️ | Correctly deferred to Part O. |
+| Legacy template cleanup | 🟡 | Old GameMode/template references and redirector paths remain. |
+
+The project does **not** need a full inventory-system rewrite.
+
+The correct strategy is to keep the current architecture, finish the identity/effective-value contracts, fix the identified save/build integration gates, and then implement A–O in dependency order.
+
+---
+
+# 10. Final Implementation Principle
 
 Rihla should grow by adding systems around the existing architecture, not by bypassing it.
 

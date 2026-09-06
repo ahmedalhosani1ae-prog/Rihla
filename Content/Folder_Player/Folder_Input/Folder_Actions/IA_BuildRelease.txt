@@ -1,0 +1,2 @@
+Digital (bool)
+("/Script/EnhancedInput.InputTriggerPressed'/Game/Player/Input/Actions/IA_BuildRelease.IA_BuildRelease:InputTriggerPressed_0'")
