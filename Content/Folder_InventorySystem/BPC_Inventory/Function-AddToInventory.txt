@@ -1,4 +1,5 @@
 Begin Object Class=/Script/BlueprintGraph.K2Node_FunctionEntry Name="K2Node_FunctionEntry_0" ExportPath="/Script/BlueprintGraph.K2Node_FunctionEntry'/Game/InventorySystem/BPC_Inventory.BPC_Inventory:AddToInventory.K2Node_FunctionEntry_0'"
+   MetaData=(Category=NSLOCTEXT("KismetSchema", "Default", "Default"))
    ExtraFlags=201457664
    FunctionReference=(MemberName="AddToInventory")
    bIsEditable=True
