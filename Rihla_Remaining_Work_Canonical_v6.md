@@ -1,1962 +1,2293 @@
 # Rihla — Remaining Work (Canonical v6)
 
-**Engine:** Unreal Engine 5.7.4
-**Project:** Rihla
-**Repository:** `ahmedalhosani1ae-prog/Rihla`
-**Target:** TotK-inspired inventory, equipment, quick-select, player-resource, durability, and save systems.
-
-This is the canonical planning document for the remaining Rihla work.
-
-It replaces the earlier A–O planning documents and Canonical v5.
-
-The project already has substantial inventory/quick-select work completed, plus the native C++ `PlayerStatsComponent` foundation.
-
-The following systems are intentionally **not part of Rihla's planned feature set**:
-
-* Building / Ultrahand.
-* Ancient Relic construction.
-* Cooking.
-* Battery.
-* Weapon fusion.
-* Weapon infusion.
-* Arrow fusion.
-* Arrow infusion.
-* Any other permanent or temporary item-fusion/infusion system.
-
-The project should not introduce these systems later unless the design is deliberately changed.
+> **Engine:** Unreal Engine 5.7.4
+> **Project:** Rihla
+> **Design target:** A TotK-inspired exploration/action game, but **not a TotK clone**.
+> **Core identity:** Exploration, combat, traversal, equipment progression, cooking, quests, materials, and meaningful world interaction.
 
 ---
 
-# 0. Purpose and Non-Negotiable Architecture
+# 1. Project Vision
 
-Rihla uses the following ownership model:
+Rihla is built around the following gameplay loop:
 
-* **`DT_ItemData` / `S_ItemInfo`** define what an item type is.
-* **`S_ItemSlot`** stores state belonging to a specific inventory instance/stack.
-* **`BPC_Inventory`** owns inventory state and all inventory mutations.
-* **`PlayerStatsComponent`** owns player health and stamina.
-* **`BPC_QuickSelect` / `WBP_QuickSelectMenu`** own quick-select presentation and selection flow, not inventory state.
-* **`S_GameData`** owns persistent save state.
+```text
+EXPLORE
+   ↓
+Discover locations
+Find materials
+Find equipment
+Meet NPCs
+Discover quests
+   ↓
+FIGHT
+   ↓
+Collect rewards
+   ↓
+COOK / USE ITEMS
+   ↓
+UPGRADE EQUIPMENT
+   ↓
+UNLOCK / IMPROVE ABILITIES
+   ↓
+Reach new areas
+   ↓
+Explore farther
+```
 
-The following rules are mandatory:
+The game should feel inspired by modern open-world action-adventure games while developing its **own systems and identity**.
 
-1. **Static item data is never modified at runtime to represent a particular item instance.**
-2. **Array indices are positional only, never identity.**
-3. **Every unique inventory instance/stack carries a stable `ItemInstanceID` (`FGuid`).**
-4. **Inventory mutations are authoritative and transactional.**
-5. **UI requests gameplay operations; UI does not directly mutate inventory or player stats.**
-6. **Effective item values are resolved through one shared path instead of being recalculated independently in multiple systems.**
-7. **Transient state and persistent state are explicitly separated.**
-8. **A feature must not introduce a second source of truth for data another existing system already owns.**
-9. **No fusion or infusion state exists anywhere in the inventory architecture.**
-10. **No cooking-generated item state exists in the inventory architecture.**
-11. **No building system or build-specific inventory transaction exists.**
-12. **Battery is not a player resource.**
+Rihla does **not** use:
 
----
+* Building / Ultrahand
+* Battery
+* Weapon fusion
+* Weapon infusion
+* Arrow fusion
+* Arrow infusion
+* Permanent item fusion
+* Temporary item fusion
+* Cooking-generated fusion states
 
-# 1. Already Completed / Verified in the Current Project
+Instead, progression comes from:
 
-The current project confirms that the following foundations are present and should not be rebuilt:
-
-* Hotbar removal.
-* Quick-select system creation.
-* Equipment highlight system.
-* Equipped items remain in their normal inventory grid slot.
-* No separate equipment circles.
-* Drop duplication bug fixed in the current gameplay flow.
-* Phantom inventory-slot bug fixed in the current gameplay flow.
-* Pause-on-open.
-* Pause toggle behavior.
-* Quick-select carousel visual polish.
-* Quick-select Widget Animation scale/opacity.
-* Smooth ScrollBox scrolling.
-* Quick-select slot count reflects the number of relevant items.
-* `S_ItemSlot` contains `ItemInstanceID`.
-* `S_ItemSlot` contains durability and usage state.
-* `BPC_Inventory` contains `FindSlotByInstanceID`.
-* `BPC_Inventory` contains `EquipItemByInstanceID`.
-* Equipment/save data use instance-ID-based references in the current implementation.
-* Native `PlayerStatsComponent` exists and is attached to the Character.
-
-## Native C++ foundation already delivered
-
-### `PlayerStatsComponent`
-
-The native C++ component already provides:
-
-* Current/max health.
-* Temporary health.
-* Current/max stamina.
-* Temporary stamina.
-* Clamped resource mutation.
-* Health/stamina change delegates.
-* Death delegate.
-* `ApplySavedStats`.
-* `InitializeNewGameStats`.
-* `SetMaxHealth`.
-* `SetMaxStamina`.
-
-The component is already attached to the Character.
-
-Remaining work is gameplay/UI integration, resource-policy cleanup, and save validation.
+* Equipment upgrades
+* Materials
+* Currency
+* Quests
+* Cooking
+* Player abilities
+* Exploration
+* Combat mastery
+* World interaction
 
 ---
 
-# 2. Core Architecture Rules
+# 2. System Ownership
 
-## 2.1 Static item data
+| System                      | Authority                                   |
+| --------------------------- | ------------------------------------------- |
+| `DT_ItemData`               | Static item definitions                     |
+| `S_ItemInfo`                | Static item definition data                 |
+| `S_ItemSlot`                | Individual inventory instance/stack state   |
+| `BPC_Inventory`             | Inventory state and inventory mutations     |
+| `PlayerStatsComponent`      | Health and stamina                          |
+| Currency system             | Player currency                             |
+| Equipment Upgrade System    | Equipment progression/upgrades              |
+| Cooking System              | Recipes, cooking and cooked-item generation |
+| Quest System                | Quest state, objectives and rewards         |
+| `WorldInteractionComponent` | Generic world interaction capabilities      |
+| Grapple system              | Grapple traversal                           |
+| Combat system               | Parry, dodge, attacks and combat behavior   |
+| `BPC_QuickSelect`           | Quick-select state/presentation             |
+| `WBP_QuickSelectMenu`       | Quick-select UI                             |
+| Inventory widgets           | Display and interaction requests            |
+| `S_GameData`                | Persistent save snapshot                    |
+| Static database             | Static item definitions only                |
 
-`DT_ItemData` and its associated item-information structures define what an item **type** is.
+---
+
+# 3. Non-Negotiable Architecture Rules
+
+## 3.1 Static vs Instance Data
+
+Never modify static `DT_ItemData` data at runtime to represent an individual item's state.
+
+Static data describes:
+
+```text
+Item Type
+```
+
+Instance data describes:
+
+```text
+This specific item/stack
+```
+
+---
+
+## 3.2 Stable Item Identity
+
+Every unique inventory instance/stack must have:
+
+```text
+ItemInstanceID : FGuid
+```
+
+`ItemID` identifies the item type.
+
+`ItemInstanceID` identifies the exact inventory instance.
+
+Never use array index as persistent identity.
+
+---
+
+## 3.3 Array Indices
+
+`ItemSlots` array indices are positional only.
+
+Never save or reference:
+
+```text
+Inventory Slot Index = Item Identity
+```
+
+Sorting, moving, splitting, merging and UI rebuilding must never break item identity.
+
+---
+
+## 3.4 UI Authority
+
+UI requests gameplay operations.
+
+UI must NOT directly mutate:
+
+* `ItemSlots`
+* Currency
+* Health
+* Stamina
+* Durability
+* Equipment state
+* Upgrade levels
+* Quest state
+
+Gameplay systems perform the mutation and then notify/refresh UI.
+
+---
+
+## 3.5 Transactional Mutations
+
+Important gameplay operations must follow:
+
+```text
+Validate
+↓
+Prepare
+↓
+Commit
+↓
+Refresh
+```
+
+Never destroy/remove the original state before the replacement/new state has successfully committed.
+
+---
+
+# 4. Final `S_ItemSlot` Design
+
+`S_ItemSlot` represents an inventory instance/stack.
+
+Required persistent fields:
+
+```text
+ItemInstanceID : FGuid
+ItemID
+ItemQuantity
+CurrentDurability
+TimesUsed
+```
+
+Equipment-specific progression may also require:
+
+```text
+UpgradeLevel
+```
+
+or another dedicated equipment progression representation.
+
+Additional fields may be added only when they represent **real per-instance state**.
+
+## Explicitly forbidden:
+
+```text
+Fusion state
+Infusion state
+Cooking fusion state
+Build-source state
+Battery state
+Ultrahand state
+```
+
+Cooked food should be represented as a legitimate item/instance with its own valid item data and effects rather than creating a fusion system.
+
+---
+
+# 5. Item Identity Rules
+
+## `ItemID`
+
+Represents:
+
+> What kind of item is this?
 
 Examples:
 
-* Item name.
-* Description.
-* Category.
-* Base damage.
-* Base armor.
-* Base restoration values.
-* Mesh/class references.
-* Other permanent item-type properties.
+```text
+Iron Sword
+Apple
+Wooden Shield
+Healing Herb
+```
 
-Static item data must never be modified to represent one particular inventory instance.
+## `ItemInstanceID`
 
----
+Represents:
 
-## 2.2 Per-instance inventory state
-
-`S_ItemSlot` stores state belonging to the actual inventory instance/stack.
-
-Examples:
-
-* `ItemInstanceID`.
-* `ItemID`.
-* Quantity.
-* `CurrentDurability`.
-* `TimesUsed`.
-* Other future per-instance state that is genuinely required.
-
-The following are **not** part of `S_ItemSlot`:
-
-* Fusion state.
-* Infusion state.
-* Cooking overrides.
-* Build-source state.
-* Battery state.
-
----
-
-## 2.3 Item type vs item instance
-
-These meanings must never be mixed.
-
-### `ItemID`
-
-Identifies the **item type/static definition**.
+> Which exact physical inventory instance is this?
 
 Example:
 
 ```text
-ItemID = Sword
+Iron Sword
+ItemID = Sword_Iron
+ItemInstanceID = {GUID}
 ```
 
-All Swords use the same static item definition.
-
-### `ItemInstanceID`
-
-Identifies the **specific inventory instance/stack**.
-
-Example:
-
-```text
-ItemInstanceID = 8F...
-ItemID = Sword
-Quantity = 1
-```
-
-Another Sword can have the same `ItemID` but a different `ItemInstanceID`.
-
----
-
-## 2.4 Stable item identity
-
-Array indices are positional only.
-
-An index can change when:
-
-* Items are removed.
-* Items are sorted.
-* Stacks are split.
-* Stacks are merged.
-* Other inventory mutations occur.
-
-Every operation that means:
-
-> "this exact item"
-
-must use `ItemInstanceID`.
-
-This includes:
-
-* Equip.
-* Unequip.
-* Drop.
-* Consume/use.
-* Durability changes.
-* Usage tracking.
-* Hover/selection state.
-* Pending replacement transactions.
-
-Indices may still be used internally and transiently inside a function after resolving an instance ID to its current slot.
-
----
-
-## 2.5 Item-instance lifecycle rules
-
-### Creation
-
-When an item instance/stack is first created:
-
-* Generate one new valid `FGuid`.
-* Store it in the slot.
-* Never regenerate it simply because the slot moved.
-
-### Split
-
-When a stack is split:
-
-* The original stack keeps its original `ItemInstanceID`.
-* The new stack receives a new `ItemInstanceID`.
-* The original stack retains its existing `TimesUsed` unless gameplay explicitly requires otherwise.
-* The new stack starts with appropriate new-instance state.
-
-### Merge
-
-When two compatible stacks merge:
-
-* One instance is chosen as the surviving instance.
-* The surviving instance keeps its `ItemInstanceID`.
-* The absorbed instance is removed completely.
-* Do not generate a new ID for the merged stack unless the project explicitly decides that merging represents a new instance.
-* `TimesUsed` follows the surviving instance.
-
-Merge/split rules must be deterministic.
-
----
-
-## 2.6 Equipment identity
-
-`EquippedItemIDs` must store `ItemInstanceID` values.
-
-Example:
+If two identical swords exist:
 
 ```text
 Sword A
-ItemID = Sword
-InstanceID = A
+ItemID = Sword_Iron
+ItemInstanceID = GUID_A
 
 Sword B
-ItemID = Sword
-InstanceID = B
+ItemID = Sword_Iron
+ItemInstanceID = GUID_B
 ```
 
-Equipment must be able to say:
+They are separate instances.
+
+---
+
+# 6. Split / Merge Rules
+
+## Split
+
+Original stack retains its ID.
+
+New stack receives a new ID.
 
 ```text
-Equipped Instance = B
+Original:
+GUID_A
+Quantity 10
+
+Split 4:
+
+Original:
+GUID_A
+Quantity 6
+
+New:
+GUID_B
+Quantity 4
 ```
 
-rather than merely:
+## Merge
 
-```text
-Equipped ItemID = Sword
-```
+One instance survives.
 
-This is required because identical item types can coexist.
+The absorbed instance ID is destroyed.
 
----
+The result must be deterministic.
 
-## 2.7 Inventory authority
-
-`BPC_Inventory` remains the authoritative owner of:
-
-* `ItemSlots`.
-* Adding/removing items.
-* Stack operations.
-* Equipment.
-* Capacity.
-* Item-instance state.
-* Effective item-stat/effect queries.
-* Usage tracking.
-* Sorting/view generation.
-* Inventory-side transaction validation.
-* Save/load inventory state.
-
-Other systems request inventory operations through `BPC_Inventory`.
-
-They do not directly edit `ItemSlots`.
+Never create duplicate authoritative instances.
 
 ---
 
-## 2.8 Player-resource authority
-
-`PlayerStatsComponent` owns:
-
-* Health.
-* Temporary health.
-* Stamina.
-* Temporary stamina.
-
-There is **no Battery resource**.
-
-Other systems call the component.
-
-They do not directly write those values.
-
----
-
-## 2.9 Save authority
-
-`S_GameData` is the authoritative persistent snapshot.
-
-Every feature that introduces persistent state must specify how that state enters/leaves `S_GameData`.
-
-Transient runtime state must not automatically become save data.
-
----
-
-## 2.10 Effective-value authority
-
-Where a value can differ between static data and the actual inventory instance, create one centralized effective-value query.
-
-The project should eventually have a consistent family of functions such as:
-
-* `GetEffectiveDamage(ItemInstanceID)`.
-* `GetEffectiveDefense(ItemInstanceID)`.
-* `GetEffectiveItemEffects(ItemInstanceID)`.
-
-The exact implementation can be Blueprint or C++, but there must not be several independent copies of the same calculation.
-
-Because fusion/infusion has been removed, `GetEffectiveDamage` does **not** apply any fusion or infusion bonus.
-
----
-
-# 3. Foundational Prerequisites
-
-These are architectural contracts rather than new gameplay features.
-
-## 3.1 Verify/complete `ItemInstanceID` migration
-
-Before implementing durability, sorting, or final save integration:
-
-1. Ensure `ItemInstanceID : FGuid` exists in `S_ItemSlot`.
-2. Generate it exactly once when creating a new instance/stack.
-3. Ensure `FindSlotByInstanceID` exists in `BPC_Inventory`.
-4. Ensure newly loaded legacy slots receive an ID if none exists.
-5. Change equipment references to instance IDs.
-6. Ensure UI-created/selected slots carry both `ItemID` and `ItemInstanceID`.
-7. Audit existing functions for index-based identity assumptions.
-
----
-
-## 3.2 Establish effective item-effect resolution
-
-Create one shared resolution path:
-
-```text
-ItemInstanceID
-    ↓
-Find S_ItemSlot
-    ↓
-Read ItemID
-    ↓
-Get S_ItemInfo from DT_ItemData
-    ↓
-Apply valid per-instance overrides
-    ↓
-Return effective item effects
-```
-
-At minimum, the effect model can support:
-
-* Health restore.
-* Stamina restore.
-* Temporary health.
-* Temporary stamina.
-* Future status/buff effects.
-
-There must be one authoritative resolution path.
-
-No fusion/infusion calculation is performed.
-
-No cooking calculation is performed.
-
----
-
-## 3.3 Runtime transaction rule
-
-Inventory-changing operations must have a clear commit point.
-
-Examples:
-
-```text
-Use:
-validate → resolve effects → apply → consume → register use → commit
-
-Swap:
-validate → reserve → add new → commit old removal → drop old
-```
-
-Other systems must not observe a half-completed inventory transaction.
-
----
-
-# 4. Dependency Order
-
-The implementation order is:
-
-0. **Foundational cleanup / integration gates**
-1. **Part A — Player Stats**
-2. **Part B — Generic Quick Select**
-3. **Part C — Icon Tabs**
-4. **Part D — Container Popup**
-5. **Part E — Eating / Item Use**
-6. **Part F — Wardrobe Hover**
-7. **Part G — Capacity Enforcement**
-8. **Part H — Full Inventory Swap**
-9. **Part I — Save/Load Expansion**
-10. **Part J — Durability / Weapon Breaking**
-11. **Part K — Sorting + Synchronization**
-
-The following previous systems have been permanently removed from the roadmap:
-
-* Building.
-* Ultrahand.
-* Ancient Relic construction.
-* Cooking.
-* Battery.
-* Weapon fusion.
-* Weapon infusion.
-* Arrow fusion.
-* Arrow infusion.
-* Context-sensitive quick select for fusion/building.
-
-Sorting remains last.
-
----
-
-# 4.5. Current-Project Integration Gates
-
-These should be completed before the affected systems are treated as production-ready.
-
-## Gate 1 — Container save representation
-
-`S_ContainerData` must not store live runtime `BPC_Inventory` references as persistent save state.
-
-Persistent save data should represent:
-
-* Stable container identity.
-* Persistent container contents/state.
-
-The runtime container actor/component resolves its runtime inventory from that persistent state after loading.
-
----
-
-## Gate 2 — Complete identity audit
-
-Array indices may still be used as temporary positional UI or lookup values.
-
-They must not be used as the identity of an item being mutated.
-
-Audit:
-
-* Add.
-* Remove.
-* Drop.
-* Equip.
-* Unequip.
-* Use.
-* Transfer.
-* Move.
-* Durability damage.
-* Sorting.
-* Replacement/swap.
-* Save/load.
-* Quick-select selection.
-
-Preferred pattern:
-
-```text
-UI/temporary index
-    ↓
-resolve current ItemInstanceID
-    ↓
-authoritative BPC_Inventory operation
-```
-
----
-
-## Gate 3 — GameMode/template cleanup
-
-The current project still contains stale Third Person template paths/redirectors in configuration.
-
-Update authoritative GameMode references to the current Rihla GameMode path.
-
-Then remove obsolete redirectors/references only after project-wide reference checking.
-
-Clean stale template naming where appropriate.
-
-This is cleanup/integration work, not a gameplay rewrite.
-
----
-
-## Gate 4 — Effective-item resolution
-
-Create the shared effective-value/effect API before durability, item use, and sorting are finalized.
-
-At minimum:
-
-* `GetEffectiveDamage(ItemInstanceID)`.
-* `GetEffectiveDefense(ItemInstanceID)`.
-* `GetEffectiveItemEffects(ItemInstanceID)`.
-
-No system should independently calculate these values.
-
----
-
-# Part A — Player Stats
-
-## Goal
-
-Make `PlayerStatsComponent` the one authoritative source for player health and stamina.
-
-## A1. Existing component
-
-Do not create another stats component.
-
-Use:
-
-`PlayerStatsComponent`
-
-attached to the player Character.
-
----
-
-## A2. Units
-
-### Health
-
-* `1 Health unit = 1 quarter-heart`.
-* `4 Health units = 1 full heart`.
-* Example: `MaxHealth = 12` means 3 hearts.
-
-### Stamina
-
-* `1.0 Stamina unit = 1 full stamina-wheel segment`.
-* Example: `MaxStamina = 3.0` means three full stamina segments.
-
-There is no Battery system.
-
----
-
-## A3. Existing API
-
-The delivered C++ provides:
-
-* `RestoreHealth`.
-* `RestoreStamina`.
-* `AddTemporaryHealth`.
-* `AddTemporaryStamina`.
-* `TakeDamage`.
-* `DrainStamina`.
-* Temporary-resource clear functions.
-* Save application.
-* `InitializeNewGameStats`.
-* `SetMaxHealth`.
-* `SetMaxStamina`.
-
-Do not create duplicate Blueprint-only versions.
-
----
-
-## A4. Damage
-
-`TakeDamage`:
-
-1. Consumes temporary health first.
-2. Applies remaining damage to normal health.
-3. Clamps to zero.
-4. Broadcasts changes.
-5. Marks the player dead when health is depleted.
-
-Death animations, movement restrictions, camera behavior, respawn, and gameplay mode remain Character/gameplay responsibilities.
-
----
-
-## A5. Temporary-resource policy
-
-The component owns the resource values and mutation API.
-
-Gameplay systems must define:
-
-* Stack vs replace.
-* Expiration.
-* Removal.
-* Death behavior.
-* Restoration behavior.
-
-Do not let individual item/effect systems invent conflicting rules.
-
----
-
-## A6. Access
-
-Use:
-
-```text
-Widget / Gameplay system
-        ↓
-Character
-        ↓
-PlayerStatsComponent
-```
-
-Avoid repeated global world searches.
-
----
-
-## A7. Progression
-
-Use:
-
-* `SetMaxHealth`.
-* `SetMaxStamina`.
-
-Do not let arbitrary systems directly assign max values.
-
----
-
-# Part B — Generic Multi-Category Quick Select
-
-## Goal
-
-Turn the existing quick-select system into a reusable category-driven system.
-
-## B1. Widget
-
-In `WBP_QuickSelectMenu` add:
-
-`CurrentCategory : E_ItemCategory`
-
-Properties:
-
-* Instance Editable.
-* Expose on Spawn.
-
-Use generic names:
-
-* `Items`.
-* `ItemCount`.
-* `HorizontalBox_Items`.
-
----
-
-## B2. Filtering
-
-Inside `InitializeQuickSelect`:
-
-1. Iterate the current inventory/order representation.
-2. Resolve each slot's `ItemID`.
-3. Read `S_ItemInfo`.
-4. Read `ItemCategory`.
-5. Compare against `CurrentCategory`.
-6. Add matching instances only.
-
-Filtering must be data/category based.
-
----
-
-## B3. Selection identity
-
-Every displayed quick-select slot stores:
-
-* `ItemID`.
-* `ItemInstanceID`.
-
-The selected value passed to inventory is always:
-
-`ItemInstanceID`.
-
----
-
-## B4. Quick-select component
-
-Use:
-
-`OpenQuickSelect`
-
-with:
-
-`Category : E_ItemCategory`
-
-Pass Category into `WBP_QuickSelectMenu.CurrentCategory`.
-
----
-
-## B5. Input Actions
-
-The exact final quick-select mappings should correspond to the categories you want readily accessible.
-
-Initial intended mappings:
-
-* Melee → Weapons.
-* Defensive → Shields.
-* Attachment/utility → Materials.
-
-These are category shortcuts only.
-
-There is no fusion/infusion mode.
-
-There is no build mode.
-
-There is no arrow-fusion mode.
-
----
-
-## B6. Empty category
-
-Before opening:
-
-1. Query whether the requested category contains at least one valid selectable instance.
-2. If zero:
-
-   * Do not create the widget.
-   * Do not pause.
-   * Do not change selection.
-
-Centralize this check.
-
----
-
-## B7. Equip/use
-
-Flow:
-
-```text
-Input
-→ BPC_QuickSelect
-→ WBP_QuickSelectMenu
-→ ItemInstanceID
-→ BPC_Inventory operation
-```
-
-Weapons/bows/shields use the existing equipment flow.
-
-Consumable/usable categories use the authoritative inventory use flow.
-
-Do not create another equipment implementation.
-
----
-
-# Part C — Icon-Based Inventory Tabs
-
-## Goal
-
-Replace text-only category filters with category icons.
-
-## C1. Icons
-
-Create/source:
-
-1. Weapons.
-2. Bows.
-3. Shields.
-4. Armor.
-5. Materials.
-6. Meals/Consumables.
-7. Utility/Miscellaneous if required.
-8. Key Items.
-
-The exact category count should match the final `E_ItemCategory` design.
-
-## C2. `WBP_ItemFilter`
-
-Add:
-
-`CategoryIcon : Texture2D`
-
-and an `Image` widget.
-
-## C3. Setup
-
-Set the icon from `CategoryIcon`.
-
-Text may remain as:
-
-* Tooltip.
-* Fallback.
-* Accessibility label.
-
-## C4. Instances
-
-Assign icons to the inventory filter instances.
-
-## C5. Validation
-
-Verify:
-
-* Correct icon.
-* Correct category.
-* Existing filtering unaffected.
-* Null icon does not break layout.
-
----
-
-# Part D — Container Popup
-
-## Goal
-
-Make ordinary container interaction feel like a TotK-style item discovery/pickup rather than opening the full inventory.
-
-## D1. Normal pickup
-
-`BP_Container_Base` should not open `WBP_ContainerUI` for an ordinary pickup.
-
-## D2. Popup
-
-Use `WBP_ContainerDisplay` or a dedicated popup containing:
-
-* Item icon.
-* Name.
-* Short description.
-* Pickup/confirmation presentation.
-* Animation.
-
-## D3. Normal vs full
-
-### Normal
-
-```text
-Container
-→ Inventory Add
-→ Pickup Popup
-```
-
-### Full
-
-```text
-Container
-→ Inventory Full result
-→ Full Inventory Popup
-→ Player chooses replacement
-```
-
-## D4. Transaction
-
-Do not permanently remove the container item until inventory insertion succeeds.
-
-If insertion fails, leave the container item unchanged.
-
-## D5. Legacy widget
-
-Only delete `WBP_ContainerUI` after checking every reference.
-
----
-
-# Part E — Eating / Item Use
-
-## Goal
-
-Make usable food/items affect the player through `PlayerStatsComponent`.
-
-Cooking is not part of the system.
-
-Food items come from normal item definitions and inventory entries.
-
-## E1. Identity
-
-`UseItem` should accept:
-
-`ItemInstanceID`
-
-as the identity of the item being consumed.
-
-## E2. Effective effects
-
-Resolve:
-
-* Health restore.
-* Stamina restore.
-* Temporary health.
-* Temporary stamina.
-
-For each value:
-
-```text
-active slot override
-    if override >= 0
-else
-static S_ItemInfo value
-```
-
-If the final implementation does not require per-instance overrides, use the static item values directly through the centralized effect resolver.
-
-## E3. Apply
-
-Call:
-
-* `RestoreHealth`.
-* `RestoreStamina`.
-* `AddTemporaryHealth`.
-* `AddTemporaryStamina`.
-
-## E4. Transaction
-
-The operation should be:
-
-```text
-Validate instance
-→ Validate item/use type
-→ Resolve effects
-→ Validate required references
-→ Apply effects
-→ Consume intended quantity
-→ RegisterItemUsed(ItemInstanceID)
-→ Refresh UI
-```
-
-If validation fails, consume nothing.
-
-## E5. Invalid cases
-
-Invalid/non-usable/missing instances must fail cleanly with no mutation.
-
----
-
-# Part F — Wardrobe Hover Information
-
-## Goal
-
-Display information for the exact inventory instance being hovered.
-
-## F1. Slot identity
-
-`WBP_InventorySlot` carries:
-
-* `ItemID`.
-* `ItemInstanceID`.
-
-## F2. Hover events
-
-Use:
-
-* `OnMouseEnter`.
-* `OnMouseLeave`.
-
-Reuse `WBP_ItemSlotPreview` patterns where appropriate.
-
-## F3. Hover data
-
-Flow:
-
-```text
-ItemInstanceID
-→ resolve slot
-→ read ItemID
-→ GetItemData
-→ resolve effective instance data
-→ populate panel
-```
-
-Display:
-
-* Name.
-* Description.
-* Category.
-* Effective damage.
-* Defense.
-* Durability where appropriate.
-* Other relevant category-specific data.
-
-Do not display fusion/infusion information.
-
-Do not display cooking effects.
-
-Do not display battery information.
-
-## F4. Hover race safety
-
-`WBP_WardrobeUI` tracks the currently hovered `ItemInstanceID`.
-
-A slot's `OnMouseLeave` clears the panel only if that instance is still the active hover.
-
-## F5. Player stats
-
-Use `PlayerStatsComponent` and its delegates for:
-
-* Health.
-* Stamina.
-
-Refresh once when the widget becomes visible and react to later changes.
-
----
-
-# Part G — Capacity Enforcement
-
-## Goal
-
-Enforce weapon/bow/shield capacity through one authoritative inventory-add path.
-
-## G1. Central gate
-
-All inventory entry points must use the same add logic:
-
-* Ground.
-* Containers.
-* Rewards.
-* Future systems.
-
-## G2. Capacity semantics
-
-Weapon/bow/shield capacity is occupied **inventory-instance/slot capacity**, not raw quantity.
-
-Stackable item quantity/stack size is a separate concept.
-
-## G3. Check order
-
-Before mutation:
-
-1. Resolve item type/category.
-2. Check whether the category is capacity limited.
-3. Attempt valid stack merging if applicable.
-4. If no merge is possible, count occupied instances.
-5. Compare against capacity.
-6. Return a structured result.
-
-Possible results:
-
-* Success.
-* Invalid item.
-* Invalid data/class.
-* Category full.
-* Other failure.
-
-## G4. Capacity ownership
-
-UI never independently decides whether the category is full.
-
-## G5. Upgrades
-
-Create:
-
-`UpgradeCategoryCapacity(Category)`
-
-It:
-
-* Increases current capacity.
-* Clamps to maximum.
-* Rejects upgrades at maximum.
-
-Future NPC/currency systems call this function.
-
----
-
-# Part H — Full Inventory Swap
-
-## Goal
-
-Safely replace one item when a limited category is full.
-
-## H1. Popup
-
-Display:
-
-> Inventory full — drop [existing item] to make room?
-
-Show:
-
-* Existing item.
-* Incoming item.
-* Confirm.
-* Cancel.
-
-## H2. Player selection
-
-Initially the player explicitly chooses the item to replace.
-
-## H3. Atomic replacement
-
-Treat replacement as one transaction:
-
-```text
-Validate incoming item
-→ Validate old ItemInstanceID
-→ Reserve old slot internally
-→ Prepare/validate incoming instance
-→ Commit incoming insertion
-→ Commit old removal
-→ Spawn/drop old item
-```
-
-The old item must not be permanently dropped before the new item has successfully entered inventory.
-
-## H4. Complete item state
-
-The transaction preserves the complete incoming instance state:
-
-* ItemID.
-* Quantity.
-* Durability.
-* ItemInstanceID.
-* Other valid per-instance state.
-
-There is no fusion state.
-
-There is no infusion state.
-
-There is no cooking state.
-
-## H5. Failure
-
-If the transaction cannot commit, restore the exact previous inventory state.
-
-## H6. Cancel
-
-Cancel changes nothing.
-
----
-
-# Part I — Save / Load Expansion
-
-## Goal
-
-Make `S_GameData` the single authoritative persistent snapshot.
-
-## I1. Save version
-
-Add:
-
-`SaveVersion`
-
-to save data.
-
-New versions must have deliberate migration behavior for older saves.
-
-## I2. Inventory state
-
-Ensure save/load preserves:
-
-* ItemInstanceID.
-* ItemID.
-* Quantity.
-* CurrentDurability.
-* TimesUsed.
-* Other persistent per-instance fields.
-
-Do not maintain a stripped-down duplicate representation.
-
-Do not serialize fusion/infusion data.
-
-Do not serialize cooking overrides.
-
-## I3. Equipment
-
-Save/load `EquippedItemIDs` as instance IDs.
-
-## I4. Capacity/progression
-
-Persist purchased capacity upgrades.
-
-## I5. Player resources
-
-Define exactly which of these persist:
-
-* Current health.
-* Max health.
-* Temporary health.
-* Current stamina.
-* Max stamina.
-* Temporary stamina.
-
-Battery is not saved because Battery does not exist in Rihla.
-
-## I6. Build-world persistence
-
-Not applicable.
-
-Rihla has no planned persistent building system.
-
-## I7. Save authority
-
-One authoritative system constructs `S_GameData`.
-
-Individual systems contribute their state; they do not create competing save objects.
-
-## I8. Validation
-
-Test:
-
-1. Equip.
-2. Damage durability.
-3. Use items.
-4. Upgrade capacity.
-5. Change player stats.
-6. Save.
-7. Reload.
-8. Verify all intended persistent state.
-
-Also verify:
-
-* ItemInstanceIDs remain valid.
-* Equipment references still resolve.
-* No duplicates appear.
-* No item disappears.
-
----
-
-# Part J — Durability and Weapon Breaking
-
-## Goal
-
-Make durability authoritative and instance-based.
-
-## J1. Primary API
-
-Create:
-
-`DamageItem(ItemInstanceID, Amount)`
-
-This is the authoritative durability mutation.
-
-Optional wrapper:
-
-`DamageEquippedItem(EquipmentCategory, Amount)`
-
-resolves the equipped instance and calls `DamageItem`.
-
-## J2. Durability
-
-`DamageItem`:
-
-1. Resolves the instance.
-2. Validates it.
-3. Subtracts durability.
-4. Clamps to zero.
-5. Detects break.
-6. Refreshes/broadcasts state.
-
-Combat never directly edits `CurrentDurability`.
-
-## J3. Break transaction
-
-On break:
-
-1. Resolve exact instance.
-2. Unequip it if equipped.
-3. Remove it.
-4. Clear equipment reference.
-5. Invalidate stale quick-select/selection references.
-6. Trigger VFX/SFX.
-7. Refresh UI.
-
-## J4. Combat integration
-
-Melee calls `DamageItem` on the actual durability-consuming event.
-
-Bow combat defines its own bow durability rules if bows use durability.
-
-There is no arrow fusion or arrow infusion system.
-
----
-
-# Part K — Sorting and Synchronization
-
-> **This remains last by design.**
-
-## K1. Usage
-
-Add:
-
-`TimesUsed : Integer`
-
-to `S_ItemSlot`.
-
-Create:
-
-`RegisterItemUsed(ItemInstanceID)`
-
-Only this function increments the counter.
-
-## K2. Definition of use
-
-Count successful gameplay actions.
-
-Examples:
-
-* Equip.
-* Eat/consume.
-* Other explicitly defined use actions.
-
-Do not count:
-
-* Hover.
-* Preview.
-* Menu opening.
-* Highlight.
-* Selecting without committing an action.
-
-## K3. Sort mode
-
-Create:
-
-`E_SortMode`
-
-Values:
-
-* Category.
-* MostUsed.
-* Damage.
-* Armor.
-* Food.
-
-`CurrentSortMode` may live in `BPC_Inventory` as shared runtime view state, but it is **not persistent inventory state** unless deliberately saved later.
-
-## K4. Storage vs display
-
-`ItemSlots` remains authoritative storage order.
-
-Never reorder it merely to change presentation.
-
-Create:
-
-`SortedItemInstances : TArray<FGuid>`
-
-as a derived display-order cache.
-
-It is:
-
-* Rebuildable.
-* Non-authoritative.
-* Not persistent.
-* Not an alternative inventory database.
-
-## K5. Sorting
-
-`SortItems`:
-
-1. Reads authoritative `ItemSlots`.
-2. Resolves effective values.
-3. Applies selected primary criterion.
-4. Applies deterministic secondary criteria.
-5. Produces only ordered `ItemInstanceID` values.
-
-## K6. Deterministic tie-breaking
-
-Use:
-
-1. Primary criterion.
-2. Category priority when required.
-3. Stable `ItemInstanceID`.
-
-Never use an array index as a persistent tie-breaker.
-
-## K7. Category
-
-Use an explicitly defined stable `E_ItemCategory` priority.
-
-Do not depend on:
-
-* Localized names.
-* Alphabetic text.
-* DataTable row order.
-
-## K8. Damage
-
-Use:
-
-`GetEffectiveDamage(ItemInstanceID)`.
-
-There are no fusion or infusion bonuses.
-
-## K9. Armor
-
-Use actual effective defense/armor.
-
-Non-armor items need deterministic placement.
-
-## K10. Food
-
-Use a clearly defined food/healing/effect ranking.
-
-Cooked meal overrides do not exist.
-
-## K11. UI refresh
-
-When sort changes:
-
-1. Update `CurrentSortMode`.
-2. Rebuild `SortedItemInstances`.
-3. Refresh main inventory from instance IDs.
-4. Refresh Quick Select from the same ordered IDs.
-5. Resolve current data by `ItemInstanceID`.
-6. Preserve equipment highlighting.
-7. Preserve current selection by `ItemInstanceID`.
-
-## K12. Quick-select filtering
-
-The flow is:
-
-```text
-Authoritative ItemSlots
-        ↓
-SortedItemInstances
-        ↓
-category filter
-        ↓
-Quick Select
-```
-
-The Quick Select widget does not maintain an independent inventory database.
-
----
-
-# 5. Cross-System Contracts
-
-## Inventory
+# 7. BPC_Inventory Responsibilities
 
 `BPC_Inventory` owns:
 
-* Inventory state.
-* Instance identity.
-* Stack operations.
-* Equipment.
-* Capacity.
-* Durability.
-* Usage counters.
-* Effective item queries.
-* Inventory transactions.
-* Sort/display ordering.
+* `ItemSlots`
+* Add item
+* Remove item
+* Stack management
+* Split
+* Merge
+* Drop
+* Transfer
+* Equipment
+* Unequipment
+* Equipment references
+* Inventory capacity
+* Capacity upgrades
+* Per-instance state
+* Durability
+* Usage tracking
+* Effective item values
+* Item use transactions
+* Sorting source data
+* Inventory-side validation
+* Save/load inventory state
 
-It does **not** own:
-
-* Player health.
-* Player stamina.
-* UI.
-* Building.
-* Cooking.
-* Fusion.
-* Infusion.
-* Battery.
+The inventory remains the **single authoritative owner of inventory instances**.
 
 ---
 
-## Player resources
+# 8. Equipment
+
+Supported equipment:
+
+* Weapons
+* Bows
+* Shields
+* Armor
+
+Equipped equipment must be referenced using:
+
+```text
+ItemInstanceID
+```
+
+Never `ItemID` alone.
+
+Example:
+
+```text
+EquippedWeaponInstanceID
+EquippedBowInstanceID
+EquippedShieldInstanceID
+```
+
+or the existing `EquippedItemIDs` structure, provided it stores `ItemInstanceID` values.
+
+---
+
+# 9. Equipment Progression & Upgrades
+
+Equipment progression replaces the role that fusion/building might otherwise have played in progression.
+
+Equipment can have:
+
+```text
+UpgradeLevel
+```
+
+Example:
+
+```text
+Traveler's Sword
+Upgrade ★★
+Damage: 18
+Durability: 42/50
+```
+
+Upgrades can modify:
+
+* Damage
+* Defense
+* Durability
+* Attack speed
+* Draw speed
+* Other explicitly supported equipment stats
+
+The exact stats depend on equipment category.
+
+---
+
+# 10. Equipment Upgrade System
+
+Create a centralized equipment upgrade system.
+
+Suggested responsibility:
+
+```text
+Equipment Upgrade System
+```
+
+It should be able to:
+
+```text
+CanUpgradeEquipment(ItemInstanceID)
+GetUpgradeRequirements(ItemInstanceID)
+GetUpgradeResult(ItemInstanceID)
+TryUpgradeEquipment(ItemInstanceID)
+```
+
+Upgrade flow:
+
+```text
+Validate instance
+↓
+Validate equipment
+↓
+Check upgrade level
+↓
+Check materials
+↓
+Check currency
+↓
+Reserve/consume requirements
+↓
+Increase upgrade state
+↓
+Refresh effective item values
+↓
+Refresh UI
+```
+
+Failed upgrades must consume nothing.
+
+---
+
+# 11. Materials
+
+Materials are no longer used for fusion.
+
+Materials can instead be used for:
+
+* Equipment upgrades
+* Cooking
+* Quests
+* Selling
+* NPC requests
+* Exploration rewards
+* Other explicitly defined progression systems
+
+Example:
+
+```text
+Iron Ore ×5
+Monster Fang ×3
+250 Currency
+↓
+Upgrade Traveler's Sword
+```
+
+This gives the Materials category a meaningful purpose without fusion.
+
+---
+
+# 12. Effective Item Values
+
+All systems must use centralized effective-value queries.
+
+Required APIs:
+
+```text
+GetEffectiveDamage(ItemInstanceID)
+GetEffectiveDefense(ItemInstanceID)
+GetEffectiveItemEffects(ItemInstanceID)
+GetEffectiveDurability(ItemInstanceID)
+```
+
+These functions must account for legitimate progression such as:
+
+```text
+Base Item Data
++
+Equipment Upgrade State
++
+Other explicitly supported permanent item state
+```
+
+There is:
+
+```text
+NO FUSION
+NO INFUSION
+```
+
+Damage must never be independently recalculated by different systems.
+
+---
+
+# 13. Player Stats
 
 `PlayerStatsComponent` owns:
 
-* Health.
-* Temporary health.
-* Stamina.
-* Temporary stamina.
+## Health
 
-There is no Battery system.
+```text
+CurrentHealth
+MaxHealth
+TemporaryHealth
+```
 
----
+Health units:
 
-## Quick Select
+```text
+1 = quarter-heart
+4 = full heart
+```
 
-`BPC_QuickSelect` owns:
+Therefore:
 
-* Opening/closing.
-* Category resolution.
-* Selection flow.
+```text
+MaxHealth = 12
+```
 
-It does not own inventory state.
+means:
 
-There is no fusion/build context system.
+```text
+3 hearts
+```
 
----
+## Stamina
 
-## Quick-select widget
+```text
+CurrentStamina
+MaxStamina
+TemporaryStamina
+```
 
-`WBP_QuickSelectMenu` owns:
+Stamina units:
 
-* Display.
-* Category filtering presentation.
-* Selection interaction.
+```text
+1.0 = one full stamina-wheel segment
+```
 
-It does not become an inventory database.
+Example:
 
----
+```text
+MaxStamina = 3.0
+```
 
-## Static item database
+means:
 
-`DT_ItemData` owns static item definitions.
+```text
+3 stamina segments
+```
 
-It is never modified to represent per-instance state.
-
----
-
-## Save system
-
-`S_GameData` owns persistent snapshot data.
-
----
-
-# 6. Critical Validation Rules
-
-## Inventory
-
-Test:
-
-* Add.
-* Remove.
-* Drop.
-* Equip/unequip.
-* Two identical item types.
-* Stable ItemInstanceID.
-* Stack split.
-* Stack merge.
-* Full category.
-* Empty category.
-* Failed transaction.
-* Invalid ItemID/data/class.
-
-## Quick Select
-
-Test:
-
-* Zero items.
-* One item.
-* Many items.
-* Correct category.
-* Correct ItemInstanceID.
-* Equip.
-* Use.
-* Close/reopen.
-* Empty categories do not open.
-* Sorting preserves selection by instance.
-
-## Containers
-
-Test:
-
-* Normal pickup.
-* Full category.
-* Replacement choice.
-* Confirm.
-* Cancel.
-* Add failure.
-* Incoming item remains if replacement fails.
-* Old item never disappears early.
-
-## Food / Item Use
-
-Test:
-
-* Health restoration.
-* Stamina restoration.
-* Temporary health.
-* Temporary stamina.
-* Invalid use.
-* Failed use consumes nothing.
-* Successful use consumes exactly the intended quantity/instance.
-
-## Durability
-
-Test:
-
-* Valid durability damage.
-* Invalid ItemInstanceID.
-* Durability clamping.
-* Weapon break.
-* Equipped weapon break.
-* Equipment reference cleanup.
-* Quick-select reference cleanup.
-* UI refresh.
-* Save/load durability.
-
-## Player Stats
-
-Test:
-
-* Health clamping.
-* Temporary-health absorption.
-* Death.
-* Revive.
-* Stamina drain.
-* Temporary stamina.
-* Max-health changes.
-* Max-stamina changes.
-* Save/reload.
-
-## Save
-
-Test:
-
-* Equipment.
-* Durability.
-* Capacity upgrades.
-* Player stats according to defined save rules.
-* ItemInstanceIDs.
-* Save-version migration.
-* No duplicates.
-* No stale equipment references.
-* No disappearing items.
+There is **NO Battery system**.
 
 ---
 
-# 7. Things That Must NOT Be Done
+# 14. PlayerStats APIs
 
-Do not:
+Existing/required APIs:
 
-* Store runtime-generated item values in `DT_ItemData`.
-* Use `ItemID` as the identity of a specific inventory instance.
-* Use array index as persistent item identity.
-* Let UI directly mutate `ItemSlots`.
-* Let Quick Select maintain a second inventory database.
-* Let combat directly edit durability.
-* Let multiple systems increment `TimesUsed`.
-* Let individual UIs implement independent sorting.
-* Enforce capacity only in container UI.
-* Drop the old replacement item before the new one is committed.
-* Consume an item before its use transaction can commit safely.
-* Save `SortedItemInstances` as authoritative inventory data.
-* Save `CurrentSortMode` unless intentionally chosen as player preference.
-* Modify base item damage at runtime.
-* Add fusion or infusion fields to item instances.
-* Create a permanent fusion/infusion system for weapons.
-* Create an arrow fusion/infusion system.
-* Create a cooking system.
-* Create a Battery resource.
-* Create a building/Ultrahand system.
-* Create Ancient Relic inventory/build transactions.
-* Add a second player-resource component.
-* Allow inventory UI to become authoritative gameplay state.
+```text
+RestoreHealth()
+RestoreStamina()
 
----
+AddTemporaryHealth()
+AddTemporaryStamina()
 
-# 8. Permanently Removed Systems
+TakeDamage()
+DrainStamina()
 
-The following systems are intentionally outside the scope of Rihla's current design.
+ClearTemporaryHealth()
+ClearTemporaryStamina()
 
-## Building / Ultrahand
+ApplySavedStats()
+InitializeNewGameStats()
 
-Removed entirely.
+SetMaxHealth()
+SetMaxStamina()
+```
 
-Do not implement:
+`TakeDamage()`:
 
-* `BuildComponent`.
-* Build gizmos.
-* Buildable actors.
-* Build input actions.
-* Snap systems.
-* Build-source transactions.
-* Ancient Relic construction.
-* Persistent structures.
-* Build-world save data.
-
-If an existing `BuildComponent` is still present in the project, it is no longer part of the planned final architecture and can be removed after checking project references.
+```text
+Temporary Health
+↓
+Normal Health
+↓
+Clamp
+↓
+Broadcast
+↓
+Death when depleted
+```
 
 ---
 
-## Cooking
+# 15. Currency
 
-Removed entirely.
+Rihla has a dedicated player currency system.
 
-Do not implement:
+Currency is a player resource, not an inventory item.
 
-* `BP_CookingPot`.
-* `DT_Recipes`.
-* Cooking ingredient selection.
-* Cooking transactions.
-* Generic cooking rules.
-* Cooked-item overrides.
-* Generated meal effects.
+Required functionality:
 
-Food/meals can still exist as normal item types and can still be consumed through `UseItem`.
+```text
+GetCurrency()
+AddCurrency()
+CanAfford()
+SpendCurrency()
+TrySpendCurrency()
+```
 
----
+Currency can be obtained from:
 
-## Battery
+* Quests
+* Enemies
+* Chests
+* Selling items
+* Exploration
+* NPC rewards
+* Other gameplay rewards
 
-Removed entirely.
+Currency can be spent on:
 
-Do not implement:
+* Equipment upgrades
+* Shops
+* Items
+* Services
+* Quest-related purchases
+* Other progression systems
 
-* Battery UI.
-* Battery resource.
-* Battery drain.
-* Battery restoration.
-* Battery upgrades.
-* Battery save data.
-
-`PlayerStatsComponent` contains only health and stamina resource systems.
-
----
-
-## Fusion / Infusion
-
-Removed entirely.
-
-Do not implement:
-
-* `FusedMaterialID`.
-* Fusion bonuses.
-* Fusion transactions.
-* Unfusing.
-* Weapon infusion.
-* Material attachment.
-* Permanent weapon modification.
-* Fusion-based effective damage calculations.
-* Fusion UI.
-* Fusion save data.
-
-`GetEffectiveDamage(ItemInstanceID)` resolves the item's actual damage from its valid item/instance data without fusion or infusion.
+All currency changes must be authoritative and transactional.
 
 ---
 
-## Arrow Fusion / Infusion
+# 16. Cooking
 
-Removed entirely.
+Cooking is restored as a major gameplay system.
 
-Do not implement:
+Cooking allows ingredients to become useful consumables.
 
-* Primed arrow materials.
-* Arrow material selection.
-* Arrow fusion.
-* Arrow infusion.
-* Temporary arrow-material state.
-* Arrow material consumption.
-* Arrow fusion UI.
+Possible results:
 
-Bows and arrows remain normal gameplay/inventory systems.
+* Health restoration
+* Stamina restoration
+* Temporary health
+* Temporary stamina
+* Temporary buffs
+* Other explicitly supported food effects
 
----
-
-# 9. Definition of Done
-
-The remaining system is structurally complete when:
-
-* Player resources have one authoritative component.
-* Player resources consist of health and stamina only.
-* Inventory has one authoritative instance-state owner.
-* Every inventory instance has stable identity.
-* Static and per-instance data are cleanly separated.
-* Equipment references exact item instances.
-* Item use is instance-based and transactional.
-* Quick Select is category-driven and instance-aware.
-* Empty categories do not open.
-* Container pickup and full-inventory replacement are transactional.
-* Capacity is enforced centrally.
-* Eating/item use uses effective item effects.
-* Effective damage is centralized.
-* Durability changes only occur because of actual gameplay events.
-* Weapon breaking correctly removes the exact instance.
-* Save/load persists all intended persistent state.
-* Save versions can be migrated safely.
-* Inventory and Quick Select share one derived ordered representation.
-* Sorting never reorders authoritative inventory storage.
-* No system creates a conflicting second source of truth.
-* No building system exists.
-* No cooking system exists.
-* No Battery system exists.
-* No fusion system exists.
-* No infusion system exists.
-* No arrow fusion/infusion system exists.
+Cooking should NOT be implemented as item fusion.
 
 ---
 
-# 10. Current Audit Snapshot
+# 17. Cooking Architecture
 
-| Area                           | Status | Notes                                                                                       |
-| ------------------------------ | ------ | ------------------------------------------------------------------------------------------- |
-| ItemInstanceID data model      | 🟢     | Present in `S_ItemSlot`.                                                                    |
-| Instance-based equipment       | 🟢     | Current equipment flow contains instance-ID references.                                     |
-| PlayerStatsComponent           | 🟢     | Native component exists and is attached to Character.                                       |
-| Health                         | 🟢     | Native resource foundation exists.                                                          |
-| Stamina                        | 🟢     | Native resource foundation exists.                                                          |
-| Battery                        | ⚪      | Removed from final design.                                                                  |
-| BuildComponent                 | ⚪      | Building removed from final design.                                                         |
-| Build input assets             | ⚪      | No longer required.                                                                         |
-| Build snap collision           | ⚪      | No longer required.                                                                         |
-| Container save representation  | 🔴     | Runtime inventory-component references must be removed from persistent save representation. |
-| Effective item resolution      | 🟡     | Per-instance foundation exists; centralized resolver still needs implementation.            |
-| Durability mutation API        | 🟡     | Data exists; authoritative `DamageItem(ItemInstanceID, Amount)` still needs implementation. |
-| Fusion                         | ⚪      | Removed from final design.                                                                  |
-| Infusion                       | ⚪      | Removed from final design.                                                                  |
-| Arrow fusion                   | ⚪      | Removed from final design.                                                                  |
-| Cooking                        | ⚪      | Removed from final design.                                                                  |
-| Save/load expansion            | 🟡     | Core instance-aware data exists; complete persistence validation remains.                   |
-| Context-sensitive Quick Select | ⚪      | Fusion/build-specific context behavior removed.                                             |
-| Generic Quick Select           | 🟢/🟡  | Existing category system remains and needs final cleanup/integration.                       |
-| Sorting/synchronization        | ⏸️     | Correctly deferred to final stage.                                                          |
-| Legacy template cleanup        | 🟡     | Old GameMode/template references and redirector paths remain.                               |
+Recommended flow:
 
-The project does **not** need a full inventory-system rewrite.
+```text
+Player
+↓
+Cooking Station
+↓
+Select Ingredients
+↓
+Validate Ingredients
+↓
+Determine Recipe/Result
+↓
+Consume Ingredients
+↓
+Create Cooked Item
+↓
+Add Result To Inventory
+↓
+Refresh UI
+```
 
-The correct strategy is to keep the current inventory architecture, finish the identity/effective-value contracts, clean up the remaining integration gates, and then implement the remaining features in dependency order.
+The cooking system owns:
+
+* Recipes
+* Ingredient validation
+* Cooking results
+* Food effects
+* Cooking transactions
+
+The inventory owns the actual resulting item instance.
 
 ---
 
-# 11. Final Feature Set
+# 18. Cooking Recipes
 
-The final Rihla inventory/gameplay foundation consists of:
+Recipes can be:
+
+* Discovered naturally
+* Learned from NPCs
+* Learned through quests
+* Found in the world
+* Experimented with by the player
+
+Recipe data should remain static where possible.
+
+Cooked item state belongs to the resulting inventory instance.
+
+No fusion state should be added to `S_ItemSlot`.
+
+---
+
+# 19. Generic Quick Select
+
+`BPC_QuickSelect` and `WBP_QuickSelectMenu` are category-driven.
+
+They do not own inventory state.
+
+Current category:
+
+```text
+E_ItemCategory
+```
+
+Widget instance should expose:
+
+```text
+CurrentCategory
+```
+
+Dynamic data:
+
+```text
+Items
+ItemCount
+HorizontalBox_Items
+```
+
+Filtering:
+
+```text
+Inventory ItemSlots
+↓
+ItemID
+↓
+Get Item Data
+↓
+ItemCategory
+↓
+Category Match
+↓
+Quick Select
+```
+
+Each quick-select slot stores:
+
+```text
+ItemID
+ItemInstanceID
+```
+
+---
+
+# 20. Three Quick Select Menus
+
+Rihla retains three quick-select menus.
+
+Initial category mappings:
+
+```text
+Melee
+→ Weapons
+
+Defensive
+→ Shields
+
+Attachment / Utility
+→ Materials or other appropriate utility category
+```
+
+These are category shortcuts only.
+
+There is:
+
+```text
+NO fusion mode
+NO building mode
+NO Ultrahand mode
+```
+
+---
+
+# 21. Empty Quick Select Protection
+
+If the selected category has no valid items:
+
+```text
+Do not create widget
+Do not pause game
+Do not change selection
+Do not enter selection mode
+```
+
+Quick-select should fail cleanly.
+
+---
+
+# 22. Quick Select Equipment / Use
+
+Quick select must call the authoritative gameplay system.
+
+For equipment:
+
+```text
+Quick Select
+↓
+BPC_Inventory
+↓
+Equip Item By Instance ID
+```
+
+For consumables:
+
+```text
+Quick Select
+↓
+BPC_Inventory.UseItem(ItemInstanceID)
+```
+
+Do not duplicate equipment logic inside the widget.
+
+---
+
+# 23. Icon Inventory Tabs
+
+Inventory tabs should use icons rather than text.
+
+Potential categories:
+
+* Weapons
+* Bows
+* Shields
+* Armor
+* Materials
+* Meals / Consumables
+* Utility / Miscellaneous
+* Key Items
+
+The exact category count must match the final `E_ItemCategory`.
+
+`WBP_ItemFilter`:
+
+```text
+CategoryIcon : Texture2D
+```
+
+and corresponding Image widget.
+
+---
+
+# 24. Container System
+
+Normal pickup:
+
+```text
+Container
+↓
+Attempt Inventory Add
+↓
+Success
+↓
+Remove container item
+↓
+Show Pickup Popup
+```
+
+If inventory is full:
+
+```text
+Container
+↓
+Inventory Full
+↓
+Full Inventory Popup
+↓
+Player selects replacement
+↓
+Transactional replacement
+↓
+Pickup succeeds
+```
+
+Never remove the container item before inventory insertion succeeds.
+
+---
+
+# 25. Container Save Representation
+
+Persistent container state must NOT depend on runtime:
+
+```text
+BPC_Inventory references
+```
+
+Save containers using stable container identity and serialized state.
+
+Example concept:
+
+```text
+ContainerID
+ContainedItemState
+Opened/Collected State
+```
+
+Runtime references may be reconstructed after loading.
+
+---
+
+# 26. Eating / Item Use
+
+Required API:
+
+```text
+UseItem(ItemInstanceID)
+```
+
+Flow:
+
+```text
+Validate item
+↓
+Resolve effective effects
+↓
+Apply effects
+↓
+Consume item
+↓
+Register use
+↓
+Commit
+↓
+Refresh UI
+```
+
+Possible effects:
+
+```text
+Health
+Stamina
+Temporary Health
+Temporary Stamina
+Other explicitly supported consumable effects
+```
+
+Invalid use consumes nothing.
+
+Effects should be resolved through the shared effective-value system.
+
+---
+
+# 27. Wardrobe Hover
+
+Wardrobe hover must carry:
+
+```text
+ItemID
+ItemInstanceID
+```
+
+Flow:
+
+```text
+ItemInstanceID
+↓
+Resolve ItemSlot
+↓
+ItemID
+↓
+GetItemData
+↓
+Resolve Effective Values
+↓
+Populate Wardrobe UI
+```
+
+Display:
+
+* Name
+* Description
+* Category
+* Damage
+* Defense
+* Durability
+* Upgrade level
+* Relevant item effects
+
+No fusion/infusion information.
+
+No battery information.
+
+---
+
+# 28. Inventory Capacity
+
+Capacity is authoritative inside `BPC_Inventory`.
+
+Applicable categories:
+
+* Weapons
+* Bows
+* Shields
+
+Capacity represents occupied inventory instances/slots, not raw quantity.
+
+Flow:
+
+```text
+Try Add
+↓
+Can Merge?
+↓
+Yes → Merge
+↓
+No → Check Occupied Capacity
+↓
+Capacity Available?
+↓
+Add New Instance
+```
+
+Structured results should distinguish:
+
+```text
+Success
+Invalid Item
+Invalid Data
+Invalid Class
+Category Full
+Other Failure
+```
+
+UI does not decide whether an item fits.
+
+---
+
+# 29. Capacity Upgrades
+
+Required API:
+
+```text
+UpgradeCategoryCapacity(Category)
+```
+
+Capacity upgrades can be rewarded through:
+
+* Currency
+* Quests
+* NPC progression
+* Exploration
+* Other explicitly designed progression
+
+The inventory remains the authority.
+
+---
+
+# 30. Full Inventory Replacement
+
+Replacement must be atomic.
+
+Flow:
+
+```text
+Validate incoming item
+↓
+Validate old instance
+↓
+Reserve old instance
+↓
+Prepare incoming instance
+↓
+Commit incoming
+↓
+Commit old removal
+↓
+Spawn/drop old item
+↓
+Refresh
+```
+
+Never:
+
+```text
+Drop old item
+↓
+Try to add new item
+```
+
+That can cause item loss.
+
+If any step fails:
+
+```text
+Restore exact previous state
+```
+
+Cancel:
+
+```text
+No mutation
+```
+
+Incoming item preserves:
+
+```text
+ItemID
+Quantity
+CurrentDurability
+ItemInstanceID
+Upgrade state
+Other valid persistent instance state
+```
+
+---
+
+# 31. World Interaction Component
+
+Create a reusable:
+
+```text
+WorldInteractionComponent
+```
+
+Its purpose is to provide a common interface for world objects and gameplay systems.
+
+Potential interaction types:
+
+```text
+None
+Interact
+Grapple
+Breakable
+Pushable
+Pullable
+Climbable
+```
+
+The system should be expandable.
+
+The initial implementation should only include interactions actually needed.
+
+---
+
+# 32. World Interaction Architecture
+
+Conceptual flow:
+
+```text
+Player
+↓
+Interaction System
+↓
+Find Target
+↓
+WorldInteractionComponent
+↓
+Can Perform Interaction?
+↓
+Get Interaction Data
+↓
+Execute Interaction
+```
+
+World objects expose capabilities.
+
+The player/tool should not need custom knowledge of every object type.
+
+---
+
+# 33. Grapple Gun
+
+Rihla includes a dedicated grapple gun.
+
+Core functionality:
+
+```text
+Aim
+↓
+Find Grapple Target
+↓
+Validate Target
+↓
+Fire Grapple
+↓
+Attach
+↓
+Pull / Traverse
+↓
+Release / Cancel
+```
+
+Grapple targets are validated through the world interaction system.
+
+Potential grapple properties:
+
+```text
+CanGrapple
+GrapplePoint
+GrappleDistance
+GrappleType
+```
+
+The system can later support:
+
+* Pulling toward targets
+* Swinging
+* Releasing
+* Grappling while airborne
+* Different grapple surfaces
+* Special grapple objects
+
+---
+
+# 34. Shield Parry
+
+Shield parry is a timing-based combat mechanic.
+
+Flow:
+
+```text
+Shield Raised
+↓
+Parry Window
+↓
+Incoming Attack
+↓
+Successful Timing?
+```
+
+Success:
+
+```text
+Negate Damage
+↓
+Enemy Stagger / Opening
+↓
+Parry Feedback
+```
+
+Failure:
+
+```text
+Normal Shield Block
+```
+
+or normal attack consequences depending on the combat system.
+
+Shield durability remains controlled by the central durability API.
+
+---
+
+# 35. Perfect Dodge
+
+Perfect dodge is separate from normal movement.
+
+Flow:
+
+```text
+Dodge
+↓
+Perfect Dodge Window
+↓
+Incoming Attack Misses During Window?
+```
+
+Success can trigger:
+
+* Combat advantage
+* Enemy opening
+* Slow-motion
+* Counterattack opportunity
+* Special feedback
+
+The exact reward should be implemented once the combat framework is established.
+
+The important rule is that perfect dodge timing is authoritative in gameplay code, not UI.
+
+---
+
+# 36. Dash
+
+Dash is a player movement ability that consumes stamina.
+
+Flow:
+
+```text
+Dash Input
+↓
+Check Stamina
+↓
+Enough?
+ ↙      ↘
+YES      NO
+ ↓        ↓
+Consume   Reject
+Stamina
+ ↓
+Dash
+```
+
+Dash should support:
+
+* Ground dash
+* Directional dash
+* Potential air dash if later desired
+
+Dash must use:
+
+```text
+PlayerStatsComponent.DrainStamina()
+```
+
+It must not directly modify the stamina variable.
+
+---
+
+# 37. Ability System
+
+The initial player abilities are:
+
+```text
+Grapple Gun
+Shield Parry
+Perfect Dodge
+Dash
+```
+
+Potential future abilities can be added without restructuring the core player architecture.
+
+Abilities should be independently testable.
+
+---
+
+# 38. Quest System
+
+Rihla requires a proper quest architecture.
+
+Quest state can include:
+
+```text
+Locked
+Available
+Active
+Completed
+Failed
+```
+
+Quest objectives can include:
+
+```text
+Collect Item
+Kill Enemy
+Reach Location
+Talk To NPC
+Interact With Object
+Use Item
+Upgrade Equipment
+Cook Item
+```
+
+Quest rewards can include:
+
+```text
+Currency
+Items
+Materials
+Equipment
+Recipes
+Ability Unlocks
+Capacity Upgrades
+Upgrade Unlocks
+```
+
+---
+
+# 39. Equipment Upgrade + Quest Integration
+
+Quests can unlock:
+
+```text
+Upgrade Tiers
+Blacksmiths
+Recipes
+Materials
+Abilities
+New Equipment
+```
+
+Example:
+
+```text
+Blacksmith Quest
+↓
+Complete Quest
+↓
+Tier 2 Equipment Upgrades Unlocked
+↓
+New Materials Become Useful
+↓
+Upgrade Equipment
+```
+
+This creates progression without requiring fusion.
+
+---
+
+# 40. Durability
+
+Required authoritative API:
+
+```text
+DamageItem(ItemInstanceID, Amount)
+```
+
+Optional:
+
+```text
+DamageEquippedItem(EquipmentCategory, Amount)
+```
+
+Flow:
+
+```text
+Resolve Instance
+↓
+Validate
+↓
+Subtract Durability
+↓
+Clamp
+↓
+Detect Break
+↓
+Refresh / Broadcast
+```
+
+Combat must never directly modify:
+
+```text
+CurrentDurability
+```
+
+---
+
+# 41. Weapon Breaking
+
+When equipment reaches zero durability:
+
+```text
+Resolve exact ItemInstanceID
+↓
+Unequip
+↓
+Remove instance
+↓
+Clear equipment reference
+↓
+Invalidate stale quick-select selection
+↓
+VFX/SFX
+↓
+Refresh UI
+```
+
+No stale instance IDs may remain active.
+
+---
+
+# 42. Usage Tracking
+
+`S_ItemSlot`:
+
+```text
+TimesUsed : Integer
+```
+
+Required API:
+
+```text
+RegisterItemUsed(ItemInstanceID)
+```
+
+It should increment only after successful gameplay actions.
+
+Examples:
+
+```text
+Equip
+Eat / Consume
+Other explicitly defined successful uses
+```
+
+Do NOT count:
+
+```text
+Hover
+Preview
+Menu open
+Highlight
+Cancelled selection
+Uncommitted operation
+```
+
+Only one system should increment `TimesUsed`.
+
+---
+
+# 43. Sorting
+
+Required:
+
+```text
+E_SortMode
+```
+
+Modes:
+
+```text
+Category
+MostUsed
+Damage
+Armor
+Food
+```
+
+`CurrentSortMode` is runtime view state.
+
+Do not persist it unless intentionally designed as a player preference.
+
+---
+
+# 44. Derived Sorting Representation
+
+`ItemSlots` remains authoritative storage.
+
+Never physically reorder it merely for sorting.
+
+Create:
+
+```text
+SortedItemInstances : TArray<FGuid>
+```
+
+This is:
+
+```text
+Derived
+Rebuildable
+Non-authoritative
+Non-persistent
+```
+
+Sorting flow:
+
+```text
+ItemSlots
+↓
+Resolve effective values
+↓
+Apply sort criteria
+↓
+Deterministic tie-break
+↓
+SortedItemInstances
+```
+
+Tie-break:
+
+```text
+Primary Criterion
+↓
+Category Priority
+↓
+Stable ItemInstanceID
+```
+
+Never array index.
+
+---
+
+# 45. Sorting + Quick Select
+
+Quick select should derive from the same authoritative inventory representation.
+
+Conceptually:
+
+```text
+ItemSlots
+↓
+SortedItemInstances
+↓
+Category Filter
+↓
+Quick Select
+```
+
+Quick select should never create its own inventory database.
+
+---
+
+# 46. Save / Load
+
+`S_GameData` is the persistent save snapshot.
+
+Required:
+
+```text
+SaveVersion
+```
+
+Save:
 
 ### Inventory
 
-* Instance-based inventory.
-* Stable `ItemInstanceID`.
-* Stack management.
-* Stack splitting.
-* Stack merging.
-* Item dropping.
-* Item transfer.
-* Equipment.
-* Equipment highlighting.
-* Capacity limits.
-* Capacity upgrades.
-* Full-inventory replacement.
-* Inventory sorting.
+```text
+ItemInstanceID
+ItemID
+Quantity
+CurrentDurability
+TimesUsed
+UpgradeLevel
+Other legitimate persistent instance state
+```
 
 ### Equipment
 
-* Weapons.
-* Bows.
-* Shields.
-* Armor.
-* Instance-based equipment references.
-* Durability.
-* Weapon breaking.
+Equipment references must use:
 
-### Quick Select
+```text
+ItemInstanceID
+```
 
-* Three quick-select menus.
-* Category-driven filtering.
-* Dynamic slot counts.
-* Instance-aware selection.
-* Empty-category protection.
-* Equipment/use integration.
-* Selection preservation through sorting.
+### Capacity
+
+Save:
+
+```text
+Category Capacity
+Capacity Upgrades
+```
 
 ### Player Resources
 
-* Health.
-* Temporary health.
-* Stamina.
-* Temporary stamina.
-* Damage.
-* Healing.
-* Death.
-* Resource upgrades.
+Save:
 
-### Items
+```text
+Current Health
+Max Health
+Temporary Health
+Current Stamina
+Max Stamina
+Temporary Stamina
+Currency
+```
 
-* Static item definitions.
-* Per-instance state.
-* Item usage tracking.
-* Effective damage.
-* Effective defense.
-* Effective item effects.
-* Consumable/food usage.
+No Battery.
 
-### Inventory UI
+### Quests
 
-* Icon-based tabs.
-* Item hover information.
-* Equipment highlighting.
-* Player health/stamina display.
-* Quick-select UI.
-* Inventory-full replacement UI.
-* Container pickup popup.
-* Pause-on-open.
+Save:
 
-### Containers
+```text
+Quest State
+Quest Progress
+Completed Objectives
+Unlocked Rewards / Progression
+```
 
-* Normal item pickup.
-* Pickup popup.
-* Capacity checking.
-* Inventory-full replacement.
-* Transaction-safe pickup.
+### Cooking
 
-### Durability
+Save only legitimate persistent data such as:
 
-* Instance-based durability.
-* Central durability damage API.
-* Weapon breaking.
-* Equipment cleanup.
-* Quick-select cleanup.
+```text
+Discovered Recipes
+Recipe Unlocks
+```
 
-### Save/Load
+if those systems are designed to persist.
 
-* Instance-aware inventory saving.
-* Equipment saving.
-* Durability saving.
-* Usage tracking saving.
-* Capacity progression saving.
-* Player resource saving according to defined rules.
-* Save versions and migration.
-* No stale runtime object references.
+No fusion state.
+
+No building state.
 
 ---
 
-# 12. Final Implementation Principle
+# 47. Save Versioning
 
-Rihla should grow by adding systems around the existing architecture, not by bypassing it.
+Save data must be versioned.
 
-The intended data flow is:
+Future structural changes should be handled through migration rather than assuming every save has the newest structure.
 
-```text
-DT_ItemData / S_ItemInfo
-        ↓
-defines item type
-        ↓
-S_ItemSlot
-        ↓
-stores specific instance state
-        ↓
-BPC_Inventory
-        ↓
-owns and mutates instance
-        ↓
-Effective Item Queries
-        ↓
-UI / Quick Select / Food / Combat
-```
-
-Player resources:
+Example:
 
 ```text
-PlayerStatsComponent
-        ↓
-Health / Stamina
+SaveVersion 1
+↓
+Migration
+↓
+SaveVersion 2
 ```
 
-Persistence:
+The system should remain expandable.
+
+---
+
+# 48. GameMode / Template Cleanup
+
+Audit the project for stale template references.
+
+Particularly:
 
 ```text
-Runtime authoritative systems
-        ↓
-S_GameData
-        ↓
-SaveVersion + persistent state
+Third Person template paths
+Old GameMode references
+Redirectors
+Obsolete Blueprint references
 ```
 
-Presentation:
+Update the authoritative Rihla GameMode.
+
+Remove obsolete redirects only after confirming there are no remaining references.
+
+---
+
+# 49. Current Integration Gates
+
+Before finalizing later systems, complete:
+
+## Gate 1 — Container Save Architecture
+
+Persistent containers must use stable serialized state rather than runtime inventory references.
+
+## Gate 2 — ItemInstanceID Audit
+
+Audit:
 
 ```text
-Authoritative runtime state
-        ↓
-Inventory / Quick Select / Wardrobe UI
+Add
+Remove
+Drop
+Equip
+Unequip
+Use
+Transfer
+Move
+Split
+Merge
+Durability
+Sorting
+Swap
+Save
+Load
+Quick Select
+Cooking results
+Equipment upgrades
+Quest rewards
 ```
 
-The key rules remain:
+Every operation must preserve identity correctly.
 
-> **ItemID answers "what is it?"**
-> **ItemInstanceID answers "which exact one is it?"**
-> **BPC_Inventory answers "what is in the inventory?"**
-> **PlayerStatsComponent answers "what resources does the player have?"**
-> **S_GameData answers "what persistent state should survive a reload?"**
+## Gate 3 — GameMode Cleanup
 
-Rihla's final architecture should remain deliberately focused: a robust instance-based inventory and equipment system with quick-select, player health/stamina, item use, capacity, durability, sorting, and reliable persistence—without introducing building, cooking, battery, fusion, or infusion systems that would create unnecessary architectural complexity.
+Remove stale template paths and references.
+
+## Gate 4 — Effective Item Resolution
+
+Finalize:
+
+```text
+GetEffectiveDamage()
+GetEffectiveDefense()
+GetEffectiveItemEffects()
+GetEffectiveDurability()
+```
+
+before completing durability, upgrades, sorting and item-use systems.
+
+---
+
+# 50. Dependency Order
+
+Recommended implementation order:
+
+```text
+0. Foundational Cleanup / Integration Gates
+        ↓
+1. Player Stats
+        ↓
+2. Generic Quick Select
+        ↓
+3. Icon Inventory Tabs
+        ↓
+4. Container Popup
+        ↓
+5. Eating / Item Use
+        ↓
+6. Cooking
+        ↓
+7. Currency
+        ↓
+8. Equipment Progression / Upgrades
+        ↓
+9. Capacity Enforcement
+        ↓
+10. Full Inventory Swap
+        ↓
+11. Durability / Weapon Breaking
+        ↓
+12. WorldInteractionComponent
+        ↓
+13. Grapple Gun
+        ↓
+14. Shield Parry
+        ↓
+15. Perfect Dodge
+        ↓
+16. Dash / Stamina Integration
+        ↓
+17. Quest System
+        ↓
+18. Wardrobe Hover
+        ↓
+19. Save / Load Expansion
+        ↓
+20. Sorting + Synchronization
+```
+
+Some systems can be developed in parallel after their dependencies are stable.
+
+---
+
+# 51. Cross-System Contracts
+
+## Inventory owns
+
+* Inventory instances
+* Item stacks
+* Equipment
+* Capacity
+* Durability
+* Usage
+* Effective item queries
+* Item use
+* Inventory transactions
+* Sorting source data
+
+## PlayerStatsComponent owns
+
+* Health
+* Temporary health
+* Stamina
+* Temporary stamina
+
+## Currency system owns
+
+* Currency
+* Currency transactions
+
+## Cooking system owns
+
+* Recipes
+* Cooking
+* Cooking validation
+* Cooking results/effects
+
+## Equipment Upgrade system owns
+
+* Upgrade requirements
+* Upgrade progression
+* Upgrade transactions
+
+## Quest system owns
+
+* Quest state
+* Objectives
+* Quest rewards
+* Quest progression
+
+## WorldInteractionComponent owns
+
+* World interaction capabilities
+* Interaction validation
+* Interaction data
+
+## Combat owns
+
+* Attacks
+* Parry timing
+* Dodge timing
+* Combat reactions
+
+## Ability systems own
+
+* Grapple
+* Dash
+* Other player abilities
+
+## Quick Select owns
+
+* Opening
+* Category
+* Selection
+* Presentation state
+
+## Widgets own
+
+* Display
+* Filtering
+* Selection interaction
+
+They do not own gameplay state.
+
+## Static database owns
+
+* Static item definitions
+* Base values
+* Static descriptions
+* Static categories
+* Static recipes where appropriate
+
+## Save system owns
+
+* Persistent snapshot
+* Save versioning
+* Migration
+
+---
+
+# 52. Critical "Must Not" Rules
+
+Never:
+
+* Modify static DataTable values to represent runtime item state.
+* Use `ItemID` as the unique identity of a physical item.
+* Use array index as persistent identity.
+* Let UI directly mutate inventory.
+* Let UI directly modify health/stamina/currency.
+* Create a second inventory database in quick select.
+* Let combat directly modify durability.
+* Have multiple systems increment `TimesUsed`.
+* Have multiple independent sorting systems.
+* Put capacity logic only in the container UI.
+* Drop the old replacement before the new item is committed.
+* Consume an item before its transaction is safely committed.
+* Save `SortedItemInstances` as authoritative data.
+* Save array indices as item identity.
+* Save `CurrentSortMode` unless intentionally designed as a persistent preference.
+* Modify base damage at runtime.
+* Reintroduce fusion/infusion.
+* Reintroduce building.
+* Reintroduce Battery.
+* Implement cooking as fusion.
+* Put quest state inside inventory.
+* Put currency inside the item inventory unless specifically required for a gameplay item.
+* Create custom interaction logic for every world object when a reusable interaction component can handle it.
+
+---
+
+# 53. Definition of Done
+
+Rihla's core architecture is complete when:
+
+### Inventory
+
+* Instance-based inventory
+* Stable `FGuid` IDs
+* Correct stacking
+* Split/merge
+* Drop
+* Transfer
+* Equipment
+* Equipment highlighting
+* Capacity
+* Capacity upgrades
+* Full inventory replacement
+* Sorting
+
+### Equipment
+
+* Weapons
+* Bows
+* Shields
+* Armor
+* Instance-based equipment references
+* Durability
+* Breaking
+* Equipment upgrades
+* Material requirements
+* Currency requirements
+
+### Player
+
+* Health
+* Temporary health
+* Stamina
+* Temporary stamina
+* Damage
+* Healing
+* Stamina drain
+* Resource upgrades
+* Death handling
+
+### Combat
+
+* Shield parry
+* Perfect dodge
+* Normal dodge
+* Dash
+* Stamina integration
+* Durability integration
+
+### Traversal
+
+* Grapple gun
+* Grapple target validation
+* World interaction framework
+* Expandable interaction types
+
+### Cooking
+
+* Ingredients
+* Recipes
+* Cooking stations
+* Cooked items
+* Food effects
+* Recipe discovery
+* Transaction-safe ingredient consumption
+
+### Currency
+
+* Currency balance
+* Add
+* Spend
+* Affordability checks
+* Shop integration
+* Upgrade integration
+* Quest rewards
+* Save/load
+
+### Quests
+
+* Quest state
+* Objectives
+* Rewards
+* Item objectives
+* NPC objectives
+* Location objectives
+* Combat objectives
+* Cooking objectives
+* Upgrade objectives
+
+### Quick Select
+
+* Three menus
+* Category-driven filtering
+* Dynamic slot count
+* Instance-aware selection
+* Empty-category protection
+* Equipment integration
+* Item-use integration
+* Selection preservation
+
+### UI
+
+* Icon tabs
+* Wardrobe hover information
+* Equipment highlighting
+* Health display
+* Stamina display
+* Currency display
+* Quick select
+* Full inventory replacement
+* Container pickup popup
+* Inventory pause
+
+### Containers
+
+* Normal pickup
+* Capacity checking
+* Replacement
+* Transaction safety
+* Persistent container state
+
+### Save / Load
+
+* Instance-aware inventory
+* Equipment
+* Durability
+* Upgrade levels
+* Usage
+* Capacity
+* Currency
+* Player resources
+* Quest progression
+* Recipe progression
+* Save versions
+* Migration support
+
+### Architecture
+
+* No conflicting sources of truth
+* No ItemID-only identity
+* No array-index identity
+* No runtime static DataTable mutation
+* No UI gameplay mutation
+* No duplicate inventory logic
+* No duplicate durability logic
+* No duplicate sorting logic
+* No fusion
+* No infusion
+* No building
+* No Battery
+
+---
+
+# 54. Final Rihla Feature Set
+
+## Inventory
+
+* Instance-based inventory
+* Stable item IDs
+* Stack management
+* Split / merge
+* Drop
+* Transfer
+* Equipment
+* Equipment highlighting
+* Capacity
+* Capacity upgrades
+* Full replacement
+* Sorting
+
+## Equipment
+
+* Weapons
+* Bows
+* Shields
+* Armor
+* Durability
+* Weapon breaking
+* Equipment progression
+* Material-based upgrades
+* Currency-based upgrades
+* Quest-based progression
+
+## Player Resources
+
+* Health
+* Temporary health
+* Stamina
+* Temporary stamina
+* Currency
+
+## Combat
+
+* Weapon combat
+* Shield blocking
+* Shield parry
+* Perfect dodge
+* Dash
+* Stamina management
+* Durability
+
+## Traversal
+
+* Grapple gun
+* Grapple points
+* World interaction
+* Expandable traversal interactions
+
+## Cooking
+
+* Ingredients
+* Recipes
+* Cooking stations
+* Food
+* Healing
+* Stamina recovery
+* Temporary effects
+* Recipe discovery
+
+## World
+
+* Generic interaction framework
+* Grappleable objects
+* Breakable objects
+* Pushable objects
+* Climbable objects
+* Expandable interaction types
+
+## Quests
+
+* Objectives
+* NPC quests
+* Collection quests
+* Combat quests
+* Exploration quests
+* Cooking quests
+* Upgrade quests
+* Rewards
+* Progression unlocks
+
+## Quick Select
+
+* Three menus
+* Category filtering
+* Dynamic slot count
+* Instance-aware selection
+* Equipment/use integration
+* Empty-category protection
+
+## UI
+
+* Icon inventory tabs
+* Wardrobe hover
+* Equipment highlighting
+* Health/stamina
+* Currency
+* Quick select
+* Inventory replacement
+* Container popup
+* Pause-on-open
+
+## Save / Load
+
+* Inventory
+* Item instances
+* Equipment
+* Durability
+* Upgrades
+* Usage
+* Capacity
+* Currency
+* Player resources
+* Quests
+* Recipe progression
+* Save versions
+
+---
+
+# 55. Systems Explicitly Removed From Rihla
+
+The following are **not part of the Rihla design**:
+
+```text
+Building / Ultrahand
+Ancient Relic Construction
+Battery
+Weapon Fusion
+Weapon Infusion
+Arrow Fusion
+Arrow Infusion
+Permanent Item Fusion
+Temporary Item Fusion
+Cooking-as-Fusion
+Fusion-specific Quick Select
+Build-specific Quick Select
+Build transactions
+Fusion save state
+Infusion save state
+Battery save state
+Build-world persistence
+```
+
+The game's progression instead comes from:
+
+```text
+EXPLORATION
+    +
+COMBAT
+    +
+TRAVERSAL
+    +
+QUESTS
+    +
+MATERIALS
+    +
+COOKING
+    +
+CURRENCY
+    +
+EQUIPMENT UPGRADES
+    +
+PLAYER ABILITIES
+```
+
+**This is the canonical Rihla v6 direction.**
