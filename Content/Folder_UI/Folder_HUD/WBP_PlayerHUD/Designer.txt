@@ -9,5 +9,5 @@ WBP_PlayerHUD
         TemporaryStaminaProgressBar (IsVariable)
 
 Animations:
-    HideStamina: 0.5s
-    ShowStamina: 0.25s
+    ShowStamina
+    HideStamina
