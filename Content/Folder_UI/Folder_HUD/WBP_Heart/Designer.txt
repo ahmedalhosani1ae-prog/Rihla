@@ -1,0 +1,2 @@
+WBP_HeartSlot
+    IMG_Heart (IsVariable)

@@ -1,5 +1,0 @@
-WBP_HeartSlot
-    CanvasPanel
-        HeartBackground (IsVariable)
-        NormalHeartFill (IsVariable)
-        TemporaryHeartFill (IsVariable)
