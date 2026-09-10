@@ -1,0 +1,6 @@
+WBP_InteractionUi
+    InteractCanvasPanel
+        Border
+            TXT_Message (IsVariable)
+        Border
+            InteractIconText (IsVariable    )

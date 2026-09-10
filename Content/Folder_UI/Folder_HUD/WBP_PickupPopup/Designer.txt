@@ -1,0 +1,14 @@
+WBP_PickupPopup
+    CanvasPanel
+        Border
+            BackgroundBlur
+                Border
+                    HorizontalBox
+                        Overlay
+                            IMG_ItemGlow (IsVariable)
+                            IMG_ItemIcon (IsVariable)
+                        VerticalBox
+                            TXT_ItemName (IsVariable)
+                            Image
+                            TXT_ItemDescription (IsVariable)
+                            TXT_ItemQuantity (IsVariable)
