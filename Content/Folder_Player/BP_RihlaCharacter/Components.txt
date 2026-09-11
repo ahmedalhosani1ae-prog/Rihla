@@ -1,5 +1,4 @@
 BP_ThirdPersonCharacter (Self)
-    BPC_CharacterEquipment (InventorySize 6)
     BPC_Interaction
     BPC_Inventory
     BPC_QuickSelect

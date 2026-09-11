@@ -1,6 +1,5 @@
 SaveVersion (Integer)
 InventoryData (S_ItemSlot (Array))
-CharacterEquipment (S_ItemSlot (Array))
 EquippedInstanceIDs (E_EquipmentCategory Value, Guid Value Type (Map))
 CurrentHealth (Integer)
 MaxHealth (Integer)
