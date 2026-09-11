@@ -1,0 +1,8 @@
+WBP_MinimalPickupPopup
+  CanvasPanel
+    Border
+      BackgroundBlur
+        Border
+          HorizontalBox
+            TXT_ItemName
+      IMG_ItemIcon
