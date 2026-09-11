@@ -2,6 +2,7 @@ WBP_PlayerHUD
     WBP_InteractionUI (IsVariable)
     HB_Hearts (IsVariable)
     WBP_PickupPopup (IsVariable)
+    WBP_MinimalPopup (IsVariable)
     StaminaOverlay (IsVariable)
         StaminaBackground (IsVariable)
         StaminaProgressBar (IsVariable)
@@ -12,3 +13,5 @@ Animations:
     HideStamina
     ShowPopup
     HidePopup
+    ShowMinimalPopup
+    HideMinimalPopup
