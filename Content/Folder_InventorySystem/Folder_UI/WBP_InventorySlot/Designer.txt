@@ -4,4 +4,5 @@ WBP_InventorySlot
             Border
                 Overlay_InventorySlot (IsVariable)
                     IMG_ItemIcon (IsVariable)
+                    IMG_ItemGlow (IsVariable)
                     TXT_ItemQuantity (IsVariable)
