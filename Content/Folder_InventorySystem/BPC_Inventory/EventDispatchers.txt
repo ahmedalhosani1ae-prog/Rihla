@@ -1,1 +1,2 @@
 OnInventoryUpdated
+OnEquipmentUpdated
