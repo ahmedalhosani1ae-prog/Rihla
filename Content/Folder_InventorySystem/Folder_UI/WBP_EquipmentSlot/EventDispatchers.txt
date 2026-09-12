@@ -1,1 +1,0 @@
-OnSlotSelected (Input: EquipmentCategory (E_EquipmentCategory))
