@@ -1,5 +1,5 @@
-BP_Inventory_Actor (Self)
+BP_Inventory_Actor (Self) (Tick Even When Paused)
     DefaultSceneRoot
         SpringArm
             PointLight
-            SceneCaptureComponent2D (Texture_Target: RT_Inventory_Actor)
+            SceneCaptureComponent2D (Texture_Target: RT_Inventory_Actor) (Tick Even When Paused)
