@@ -1,6 +1,8 @@
 WBP_QuickSelectSlot
     SizeBox (100x100)
         Overlay
+            BackgroundBlur
+            Image_Background
             Image_Icon
             Image_Selected
             TXT_Quantity
