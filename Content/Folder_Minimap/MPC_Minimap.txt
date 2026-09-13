@@ -2,19 +2,7 @@
 	"Tagged": [
 		[
 			"ScalarParameters",
-			"((ParameterName=\"PlayerYaw\",Id=EA1F628B472D4EEFE61FC2834C128924))"
-		],
-		[
-			"ScalarParameters.ScalarParameters[0]",
-			"(DefaultValue=0.000000,ParameterName=\"PlayerYaw\",Id=EA1F628B472D4EEFE61FC2834C128924)"
-		],
-		[
-			"ScalarParameters.ScalarParameters[0].DefaultValue",
-			"0.000000"
-		],
-		[
-			"ScalarParameters.ScalarParameters[0].ParameterName",
-			"PlayerYaw"
+			""
 		],
 		[
 			"VectorParameters",

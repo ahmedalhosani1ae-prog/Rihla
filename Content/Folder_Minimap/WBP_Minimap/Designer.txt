@@ -1,3 +1,5 @@
 WBP_Minimap
     CanvasPanel
         IMG_Minimap (M_Minimap)
+        IMG_PlayerPin (IsVariable)
+        IMG_MapBorder
