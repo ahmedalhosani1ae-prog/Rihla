@@ -43,12 +43,20 @@ Begin Object Class=/Script/BlueprintGraph.K2Node_VariableGet Name="K2Node_Variab
 End Object
 Begin Object Class=/Script/BlueprintGraph.K2Node_BreakStruct Name="K2Node_BreakStruct_0" ExportPath="/Script/BlueprintGraph.K2Node_BreakStruct'/Game/InventorySystem/UI/WBP_ItemSlider.WBP_ItemSlider:GetItemQuantity.K2Node_BreakStruct_0'"
    bMadeAfterOverridePinRemoval=True
-   ShowPinForProperties(0)=(PropertyName="ItemID_14_7FB56257404DFC271D1A8B929C673C89",PropertyFriendlyName="ItemID",bCanToggleVisibility=True)
-   ShowPinForProperties(1)=(PropertyName="ItemQuantity_15_127594DD477A430C269B66939A2843C0",PropertyFriendlyName="ItemQuantity",bShowPin=True,bCanToggleVisibility=True)
-   ShowPinForProperties(2)=(PropertyName="CurrentDurability_18_3AF1AD9947F9C8D615E13C8B3CD600C1",PropertyFriendlyName="CurrentDurability",bCanToggleVisibility=True)
+   ShowPinForProperties(0)=(PropertyName="ItemInstanceID_21_71DDED9A4CBE8DA2313405AF3127FAA4",PropertyFriendlyName="ItemInstanceID",bCanToggleVisibility=True)
+   ShowPinForProperties(1)=(PropertyName="ItemID_14_7FB56257404DFC271D1A8B929C673C89",PropertyFriendlyName="ItemID",bCanToggleVisibility=True)
+   ShowPinForProperties(2)=(PropertyName="ItemQuantity_15_127594DD477A430C269B66939A2843C0",PropertyFriendlyName="ItemQuantity",bShowPin=True,bCanToggleVisibility=True)
+   ShowPinForProperties(3)=(PropertyName="CurrentDurability_18_3AF1AD9947F9C8D615E13C8B3CD600C1",PropertyFriendlyName="CurrentDurability",bCanToggleVisibility=True)
+   ShowPinForProperties(4)=(PropertyName="FusedMaterialID_24_E6638FB04CAC07986E0717AEF62A7855",PropertyFriendlyName="FusedMaterialID ",bCanToggleVisibility=True)
+   ShowPinForProperties(5)=(PropertyName="TimesUsed_27_FADDA90946F6B4B7FCCB9DA233FD6728",PropertyFriendlyName="TimesUsed",bCanToggleVisibility=True)
+   ShowPinForProperties(6)=(PropertyName="OverrideHealthRestore_32_E6145FCE40D3CE3537A63F82BB7AB8AC",PropertyFriendlyName="OverrideHealthRestore",bCanToggleVisibility=True)
+   ShowPinForProperties(7)=(PropertyName="OverrideStaminaRestore_33_E57C4AA34392CD9368E09B93FDBE733E",PropertyFriendlyName="OverrideStaminaRestore",bCanToggleVisibility=True)
+   ShowPinForProperties(8)=(PropertyName="OverrideTemporaryHearts_34_F886A82F484EA7E39BC168AB103075A1",PropertyFriendlyName="OverrideTemporaryHearts",bCanToggleVisibility=True)
+   ShowPinForProperties(9)=(PropertyName="OverrideTemporaryStamina_35_02BBC0E94C5C225D1D70F5A0617F77FA",PropertyFriendlyName="OverrideTemporaryStamina",bCanToggleVisibility=True)
    StructType="/Script/CoreUObject.UserDefinedStruct'/Game/InventorySystem/ItemData/S_ItemSlot.S_ItemSlot'"
    NodePosX=656
    NodePosY=192
+   AdvancedPinDisplay=Hidden
    NodeGuid=71B6EA114AFD7A9241CDDA9AD50AC783
    CustomProperties Pin (PinId=11D204F84ABA070FC8DA95AF728BF388,PinName="S_ItemSlot",PinType.PinCategory="struct",PinType.PinSubCategory="",PinType.PinSubCategoryObject="/Script/CoreUObject.UserDefinedStruct'/Game/InventorySystem/ItemData/S_ItemSlot.S_ItemSlot'",PinType.PinSubCategoryMemberReference=(),PinType.PinValueType=(),PinType.ContainerType=None,PinType.bIsReference=True,PinType.bIsConst=True,PinType.bIsWeakPointer=False,PinType.bIsUObjectWrapper=False,PinType.bSerializeAsSinglePrecisionFloat=False,LinkedTo=(K2Node_GetArrayItem_0 2F23CC974D209A63670D33859255A329,),PersistentGuid=00000000000000000000000000000000,bHidden=False,bNotConnectable=False,bDefaultValueIsReadOnly=False,bDefaultValueIsIgnored=False,bAdvancedView=False,bOrphanedPin=False,)
    CustomProperties Pin (PinId=0C4D56EB4EDB1A02D6D5F8AD2338C985,PinName="ItemQuantity_15_127594DD477A430C269B66939A2843C0",PinFriendlyName=INVTEXT("ItemQuantity"),PinToolTip="Item Quantity\nInteger",Direction="EGPD_Output",PinType.PinCategory="int",PinType.PinSubCategory="",PinType.PinSubCategoryObject=None,PinType.PinSubCategoryMemberReference=(),PinType.PinValueType=(),PinType.ContainerType=None,PinType.bIsReference=False,PinType.bIsConst=False,PinType.bIsWeakPointer=False,PinType.bIsUObjectWrapper=False,PinType.bSerializeAsSinglePrecisionFloat=False,LinkedTo=(K2Node_FunctionResult_0 F19A1DC74BC3B931C326F1BFFA3C0412,),PersistentGuid=127594DD477A430C269B66939A2843C0,bHidden=False,bNotConnectable=False,bDefaultValueIsReadOnly=False,bDefaultValueIsIgnored=False,bAdvancedView=False,bOrphanedPin=False,)
