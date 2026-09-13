@@ -1,0 +1,3 @@
+WBP_Minimap
+    CanvasPanel
+        IMG_Minimap (M_Minimap)
