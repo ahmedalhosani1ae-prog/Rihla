@@ -18,7 +18,7 @@
 		],
 		[
 			"VectorParameters",
-			"((ParameterName=\"PlayerLocation\",Id=19D58B2D4E84D4C13722DBA7EEF9B72A))"
+			"((ParameterName=\"PlayerLocation\",Id=19D58B2D4E84D4C13722DBA7EEF9B72A),(ParameterName=\"MapOrigin\",Id=3A296AE6449C20F9DD6F319B3C2D6C20),(ParameterName=\"MapSize\",Id=1754160041E51210C8D64A9F9AE0FF8B))"
 		],
 		[
 			"VectorParameters.VectorParameters[0]",
@@ -47,6 +47,62 @@
 		[
 			"VectorParameters.VectorParameters[0].ParameterName",
 			"PlayerLocation"
+		],
+		[
+			"VectorParameters.VectorParameters[1]",
+			"(DefaultValue=(R=0.000000,G=0.000000,B=0.000000,A=0.000000),ParameterName=\"MapOrigin\",Id=3A296AE6449C20F9DD6F319B3C2D6C20)"
+		],
+		[
+			"VectorParameters.VectorParameters[1].DefaultValue",
+			"(R=0.000000,G=0.000000,B=0.000000,A=0.000000)"
+		],
+		[
+			"VectorParameters.VectorParameters[1].DefaultValue.R",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[1].DefaultValue.G",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[1].DefaultValue.B",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[1].DefaultValue.A",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[1].ParameterName",
+			"MapOrigin"
+		],
+		[
+			"VectorParameters.VectorParameters[2]",
+			"(DefaultValue=(R=0.000000,G=0.000000,B=0.000000,A=0.000000),ParameterName=\"MapSize\",Id=1754160041E51210C8D64A9F9AE0FF8B)"
+		],
+		[
+			"VectorParameters.VectorParameters[2].DefaultValue",
+			"(R=0.000000,G=0.000000,B=0.000000,A=0.000000)"
+		],
+		[
+			"VectorParameters.VectorParameters[2].DefaultValue.R",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[2].DefaultValue.G",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[2].DefaultValue.B",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[2].DefaultValue.A",
+			"0.000000"
+		],
+		[
+			"VectorParameters.VectorParameters[2].ParameterName",
+			"MapSize"
 		],
 		[
 			"Base",
