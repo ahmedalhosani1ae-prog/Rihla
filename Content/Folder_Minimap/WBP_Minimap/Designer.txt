@@ -2,4 +2,7 @@ WBP_Minimap
     CanvasPanel
         IMG_Minimap (M_Minimap)
         IMG_PlayerPin (IsVariable)
+        IMG_CameraHighlight (IsVariable)
         IMG_MapBorder
+        RetainerBox (M_Coordinates, Texture)
+            TXT_Coords

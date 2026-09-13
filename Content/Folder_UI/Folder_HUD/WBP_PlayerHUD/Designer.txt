@@ -1,5 +1,6 @@
 WBP_PlayerHUD
     WBP_InteractionUI (IsVariable)
+    WBP_Minimap (IsVariable)
     HB_Hearts (IsVariable)
     WBP_PickupPopup (IsVariable)
     WBP_MinimalPopup (IsVariable)
